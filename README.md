@@ -1,5 +1,15 @@
 # SDRPager
-POCSAG pager software based on soundcard generation of baseband
+POCSAG pager software based on soundcard generation of baseband signal
+
+## Authors:
+* Ralf Wilke DH3WR, Aachen
+* Michael Delissen, Aachen
+* Marvin Menzerat, Aachen
+
+This software is released free of charge under the Creative Commons License of type "by-nc-sa". No commercial use
+is allowed.
+The software licenses of the used libs as stated below apply in any case.
+
 
 ## Run
 * Install RXTX based on [this](http://www.jcontrol.org/download/readme_rxtx_de.html) instructions
