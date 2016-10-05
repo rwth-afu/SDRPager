@@ -477,7 +477,7 @@ public class Main {
 
 		// write name, version and authors
 		System.out.println("FunkrufSlave - Version " + VERSION
-				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at www.afu.rwth-aachen.de\n");
+				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at https://github.com/dh3wr/SDRPager/releases\n");
 
 		// parse arguments
 		parseArguments(args);
