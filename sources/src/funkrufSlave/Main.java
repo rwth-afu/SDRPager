@@ -162,12 +162,14 @@ public class Main {
 	}
 
 	public static boolean initSerialPortComm() {
-		if (!mainWindow.useSerial()) return true;
-		
+		if (!Main.config.useSerial())
+			return true;
+
 		if (serialPortComm == null) {
 			try {
 				// initialize serial port
-				serialPortComm = new SerialPortComm(Main.config.getSerialPort(), Main.config.getSerialPin(), Main.config.getInvert(), log);
+				serialPortComm = new SerialPortComm(Main.config.getSerialPort(), Main.config.getSerialPin(),
+						Main.config.getInvert(), log);
 			} catch (NoSuchPortException e) {
 				// no such port exception
 				log("startServer # Serieller Port existiert nicht!", Log.ERROR);
@@ -205,8 +207,9 @@ public class Main {
 	}
 
 	public static boolean initGpioPortComm() {
-		if (!mainWindow.useGpio()) return true;
-		
+		if (!Main.config.useGpio())
+			return true;
+
 		if (Main.config.getGpioPin() == null || !(Main.config.getGpioPin() instanceof Pin)) {
 			log("startServer # GPIO-Pin existiert nicht!", Log.ERROR);
 
@@ -240,6 +243,8 @@ public class Main {
 		}
 
 		if (!initGpioPortComm()) {
+			stopScheduler();
+
 			if (mainWindow != null) {
 				mainWindow.resetButtons();
 			}
@@ -286,6 +291,11 @@ public class Main {
 		}
 
 		if (!initSerialPortComm()) {
+			stopServer(true);
+			return;
+		}
+
+		if (!initGpioPortComm()) {
 			stopServer(true);
 			return;
 		}
@@ -377,21 +387,15 @@ public class Main {
 	// draw slots
 	public static void drawSlots() {
 		if (mainWindow != null) {
-
 			mainWindow.drawSlots();
-
 		}
 	}
 
 	// stop searching
 	public static void stopSearching() {
-
 		if (mainWindow != null) {
-
 			mainWindow.runSearch(false);
-
 		}
-
 	}
 
 	// get step width (for search)
@@ -452,9 +456,7 @@ public class Main {
 	// remove socket thread from list
 	public static void removeSocketThread(SocketThread thread) {
 		if (server != null) {
-
 			server.removeSocketThread(thread);
-
 		}
 	}
 
@@ -470,7 +472,6 @@ public class Main {
 		try {
 			Class.forName("gnu.io.RXTXCommDriver");
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.setOut(out);

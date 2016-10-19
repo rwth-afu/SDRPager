@@ -376,6 +376,10 @@ public class Config {
 	public boolean useSerial() {
 		return this.useSerial;
 	}
+	
+	public boolean useGpio() {
+		return !this.useSerial;
+	}
 
 	public boolean getInvert() {
 		return this.invert;
