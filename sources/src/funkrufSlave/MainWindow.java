@@ -859,7 +859,6 @@ public class MainWindow extends JFrame {
 				// show window
 				setExtendedState(Frame.NORMAL);
 				setVisible(true);
-				
 			}
 			
 		});
@@ -871,7 +870,7 @@ public class MainWindow extends JFrame {
 		try {
 			SystemTray.getSystemTray().add(trayIcon);
 		} catch (AWTException e) {
-			e.printStackTrace();
+			log("Kann TrayIcon nicht erstellen!", Log.INFO);
 		}
 		
 	}
