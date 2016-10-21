@@ -12,7 +12,8 @@ The software licenses of the used libs as stated below apply in any case.
 
 
 ## Run
-* Install RXTX based on [this](http://www.jcontrol.org/download/readme_rxtx_de.html) instructions
+* Install RXTX
+    * `apt install librxtx-java`
 * Run `java -Djava.library.path=/usr/lib/jni -jar FunkrufSlave.jar`
 
 ## Example-Configuration
