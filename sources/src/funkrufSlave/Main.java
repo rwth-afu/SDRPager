@@ -223,6 +223,12 @@ public class Main {
 			gpioPortComm = new GpioPortComm(Main.config.getGpioPin(), Main.config.getInvert(), log);
 			return true;
 		}
+		
+		log("startServer # GPIO-Schnittstelle konnte nicht initialisiert werden!", Log.ERROR);
+
+		if (mainWindow != null) {
+			mainWindow.showError("Server starten", "GPIO-Schnittstelle konnte nicht initialisiert werden!");
+		}
 		return false;
 	}
 
@@ -250,7 +256,7 @@ public class Main {
 			}
 			return;
 		}
-
+		
 		timer.schedule(scheduler, 100, 100);
 	}
 
@@ -288,16 +294,6 @@ public class Main {
 		if (server == null) {
 			// initialize server thread
 			server = new ServerThread(config.getPort(), messageQueue, log);
-		}
-
-		if (!initSerialPortComm()) {
-			stopServer(true);
-			return;
-		}
-
-		if (!initGpioPortComm()) {
-			stopServer(true);
-			return;
 		}
 
 		// start scheduler (not searching)

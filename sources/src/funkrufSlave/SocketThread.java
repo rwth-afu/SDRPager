@@ -62,7 +62,6 @@ public class SocketThread extends Thread {
 	// "main"
 	@Override
 	public void run() {
-		
 		try {
 			// open writer and reader
 			this.pw = new PrintWriter(this.socket.getOutputStream(), true);
@@ -77,12 +76,10 @@ public class SocketThread extends Thread {
 			
 			// if thread is running, wait for input
 			while(this.running && (inputBuffer = this.reader.readLine()) != null) {
-				
 				log("SocketThread: inputBuffer# " + inputBuffer, Log.MS);
 				
 				// handle received input
 				this.protocol.handle(inputBuffer, this.pw, Main.timeSlots);
-
 			}
 			
 			// close writer, reader and socket
@@ -94,15 +91,11 @@ public class SocketThread extends Thread {
 			this.running = false;
 			
 			log("SocketThread: connection lost", Log.COMMUNICATION);
-			
 		} catch(IOException e) {
-			
 			e.printStackTrace();
-			
 		}
 				
 		// remove thread from thread list
 		Main.removeSocketThread(this);
 	}
-	
 }
