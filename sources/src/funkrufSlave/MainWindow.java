@@ -49,6 +49,7 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 import javax.swing.border.TitledBorder;
 import javax.swing.JRadioButton;
+import java.awt.BorderLayout;
 
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -164,9 +165,9 @@ public class MainWindow extends JFrame {
 		
 		// main panel
 		main = new JPanel(null);
-		main.setPreferredSize(new Dimension(765, 450));
+		main.setPreferredSize(new Dimension(840, 470));
 		main.setBounds(0, 0, WIDTH, HEIGHT);
-		getContentPane().add(main);
+		getContentPane().add(main, BorderLayout.SOUTH);
 		
 		
 		// correction slider bounds
@@ -218,12 +219,12 @@ public class MainWindow extends JFrame {
 		
 		// search run label
 		JLabel searchLabel = new JLabel("Suchlauf");
-		searchLabel.setBounds(200, 388, 100, 18);
+		searchLabel.setBounds(200, 414, 100, 18);
 		main.add(searchLabel);
 		
 		// search run start
 		searchStart = new JButton("Start");
-		searchStart.setBounds(200, 408, 70, 18);
+		searchStart.setBounds(200, 434, 70, 18);
 		searchStart.addActionListener(new ActionListener() {
 			
 			@Override
@@ -236,7 +237,7 @@ public class MainWindow extends JFrame {
 		
 		// search run stop
 		searchStop = new JButton("Stop");
-		searchStop.setBounds(275, 408, 70, 18);
+		searchStop.setBounds(275, 434, 70, 18);
 		searchStop.setEnabled(false);
 		searchStop.addActionListener(new ActionListener() {
 			
@@ -250,12 +251,12 @@ public class MainWindow extends JFrame {
 		
 		// search run step label
 		JLabel searchStepLabel = new JLabel("Schrittweite:");
-		searchStepLabel.setBounds(350, 388, 100, 18);
+		searchStepLabel.setBounds(350, 414, 100, 18);
 		main.add(searchStepLabel);
 		
 		// search run step
 		searchStepWidth = new JTextField();
-		searchStepWidth.setBounds(new Rectangle(350, 408, 80, 18));
+		searchStepWidth.setBounds(new Rectangle(350, 434, 80, 18));
 		searchStepWidth.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -280,12 +281,12 @@ public class MainWindow extends JFrame {
 		
 		// search address label
 		JLabel searchAddressLabel = new JLabel("Skyper-Adresse:");
-		searchAddressLabel.setBounds(455, 388, 120, 18);
+		searchAddressLabel.setBounds(455, 414, 120, 18);
 		main.add(searchAddressLabel);
 		
 		// search address
 		searchAddress = new JTextField();
-		searchAddress.setBounds(455, 408, 100, 18);
+		searchAddress.setBounds(455, 434, 100, 18);
 		searchAddress.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -430,14 +431,14 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
-		startButton.setBounds(new Rectangle(600, 10, 150, 18));
+		startButton.setBounds(new Rectangle(675, 10, 150, 18));
 		main.add(startButton);
 
 		
 		// configuration panel
 		JPanel configurationPanel = new JPanel(null);
 		configurationPanel.setBorder(new TitledBorder(null, "Konfiguration", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		configurationPanel.setBounds(new Rectangle(200, 30, 550, 346));
+		configurationPanel.setBounds(new Rectangle(200, 30, 625, 372));
 		main.add(configurationPanel);
 		
 		
@@ -455,12 +456,12 @@ public class MainWindow extends JFrame {
 		
 		// master list pane
 		JScrollPane masterListPane = new JScrollPane(masterList);
-		masterListPane.setBounds(new Rectangle(12, 38, 150, 191));
+		masterListPane.setBounds(new Rectangle(12, 38, 150, 218));
 		configurationPanel.add(masterListPane);
 				
 		// serial delay label
 		JLabel serialDelayLabel = new JLabel("Delay:");
-		serialDelayLabel.setBounds(174, 261, 50, 18);
+		serialDelayLabel.setBounds(174, 292, 50, 18);
 		configurationPanel.add(serialDelayLabel);
 		
 		// serial delay
@@ -483,12 +484,12 @@ public class MainWindow extends JFrame {
 			@Override
 			public void keyPressed(KeyEvent arg0) { }
 		});
-		delay.setBounds(265, 261, 50, 18);
+		delay.setBounds(265, 292, 50, 18);
 		configurationPanel.add(delay);
 		
 		// serial delay ms
 		JLabel serialDelayMs = new JLabel("ms");
-		serialDelayMs.setBounds(319, 261, 40, 18);
+		serialDelayMs.setBounds(317, 292, 40, 18);
 		configurationPanel.add(serialDelayMs);
 		
 		// port bounds
@@ -496,12 +497,12 @@ public class MainWindow extends JFrame {
 		
 		// port label
 		JLabel portLabel = new JLabel("Port:");
-		portLabel.setBounds(12, 237, 50, 18);
+		portLabel.setBounds(12, 268, 50, 18);
 		configurationPanel.add(portLabel);
 		
 		// port
 		port = new JTextField();
-		port.setBounds(new Rectangle(50, 237, 50, 18));
+		port.setBounds(new Rectangle(50, 268, 50, 18));
 		port.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -525,11 +526,11 @@ public class MainWindow extends JFrame {
 		
 		// sounddevice
 		JLabel lblSoundkarte = new JLabel("Soundgerät:");
-		lblSoundkarte.setBounds(174, 287, 100, 15);
+		lblSoundkarte.setBounds(174, 318, 100, 15);
 		configurationPanel.add(lblSoundkarte);
 		
 		soundDeviceList = new JComboBox();
-		soundDeviceList.setBounds(265, 285, 263, 18);
+		soundDeviceList.setBounds(265, 316, 349, 18);
 		Mixer.Info[] soundDevices = AudioSystem.getMixerInfo();
 		for(Mixer.Info device : soundDevices) {
 			soundDeviceList.addItem(device);
@@ -551,7 +552,7 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
-		applyButton.setBounds(new Rectangle(12, 314, 130, 18));
+		applyButton.setBounds(new Rectangle(12, 345, 130, 18));
 		configurationPanel.add(applyButton);
 		
 
@@ -593,7 +594,7 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
-		loadButton.setBounds(new Rectangle(153, 314, 100, 18));
+		loadButton.setBounds(new Rectangle(153, 345, 100, 18));
 		configurationPanel.add(loadButton);
 		
 		
@@ -634,110 +635,9 @@ public class MainWindow extends JFrame {
 				
 			}
 		});
-		saveButton.setBounds(new Rectangle(265, 314, 110, 18));
+		saveButton.setBounds(new Rectangle(265, 345, 110, 18));
 		configurationPanel.add(saveButton);
-		
-		panel_serial = new JPanel();
-		panel_serial.setBorder(new TitledBorder(null, "Serieller Port", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_serial.setBounds(174, 129, 183, 100);
-		configurationPanel.add(panel_serial);
-		panel_serial.setLayout(null);
-		
-		// serial port
-		serialPortList = new JComboBox();
-		serialPortList.setBounds(12, 20, 151, 18);
-		panel_serial.add(serialPortList);
-		
-		// get available serial ports and add them to list
-		ArrayList<String> serialPorts = SerialPortComm.getPorts();
-		for(int i = 0; i < serialPorts.size(); i++) {
-			serialPortList.addItem(serialPorts.get(i));
-		}
-		
-		// serial pin
-		serialPin = new JComboBox();
-		serialPin.setBounds(12, 42, 151, 18);
-		panel_serial.add(serialPin);
-		serialPin.addItem("DTR"); // index 0 = SerialPortComm.DTR
-		serialPin.addItem("RTS");
-		
-		radioUseSerial = new JRadioButton("");
-		radioUseSerial.setSelected(true);
-		radioUseSerial.setBounds(154, 69, 21, 23);
-		radioUseSerial.setEnabled(false);
-		panel_serial.add(radioUseSerial);
 				
-		panel_gpio = new JPanel();
-		panel_gpio.setBorder(new TitledBorder(null, "GPIO-Pin (RasPi)", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_gpio.setBounds(363, 129, 175, 100);
-		configurationPanel.add(panel_gpio);
-		panel_gpio.setLayout(null);
-		panel_gpio.setEnabled(false);
-		
-		raspiList = new JComboBox();
-		raspiList.setBounds(12, 20, 151, 18);
-		panel_gpio.add(raspiList);
-		raspiList.addItem("Deaktiviert");
-		raspiList.setEnabled(false);
-		
-		gpioList = new JComboBox();
-		gpioList.setBounds(12, 42, 151, 18);
-		panel_gpio.add(gpioList);
-		gpioList.addItem("Deaktiviert");
-		gpioList.setEnabled(false);
-		
-		for (BoardType bt : BoardType.values()) {
-			raspiList.addItem(bt);
-		}
-				
-		btnGpiopins = new JButton("GPIO-Pins");
-		btnGpiopins.setBounds(12, 70, 115, 18);
-		panel_gpio.add(btnGpiopins);
-		btnGpiopins.setEnabled(false);
-		
-		radioUseGpio = new JRadioButton("");
-		radioUseGpio.setBounds(146, 69, 21, 23);
-		panel_gpio.add(radioUseGpio);
-		radioUseGpio.setEnabled(true);
-		
-		radioUseSerial.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (radioUseSerial.isSelected()) {
-					radioUseSerial.setEnabled(false);
-					radioUseGpio.setEnabled(true);
-					radioUseGpio.setSelected(false);
-					panel_serial.setEnabled(true);
-					panel_gpio.setEnabled(false);
-					serialPortList.setEnabled(true);
-					serialPin.setEnabled(true);
-					
-					raspiList.setEnabled(false);
-					gpioList.setEnabled(false);
-					btnGpiopins.setEnabled(false);
-				}
-			}
-		});
-		
-		radioUseGpio.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (radioUseGpio.isSelected()) {
-					radioUseGpio.setEnabled(false);
-					radioUseSerial.setEnabled(true);
-					radioUseSerial.setSelected(false);
-					panel_gpio.setEnabled(true);
-					panel_serial.setEnabled(false);
-					raspiList.setEnabled(true);
-					gpioList.setEnabled(true);
-					btnGpiopins.setEnabled(true);
-					
-					serialPortList.setEnabled(false);
-					serialPin.setEnabled(false);
-				}
-			}
-		});
-		
 		JPanel panel_2 = new JPanel();
 		panel_2.setBorder(new TitledBorder(null, "Neuer Master", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panel_2.setBounds(174, 22, 183, 92);
@@ -761,10 +661,144 @@ public class MainWindow extends JFrame {
 		
 		// serial invert
 		invert = new JCheckBox("Invertieren");
-		invert.setBounds(174, 237, 141, 18);
+		invert.setBounds(174, 268, 141, 18);
 		configurationPanel.add(invert);
+		
+		JPanel panel = new JPanel();
+		panel.setBorder(new TitledBorder(null, "PTT-Steuerung", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel.setBounds(174, 126, 440, 130);
+		configurationPanel.add(panel);
+		panel.setLayout(null);
+		
+		panel_serial = new JPanel();
+		panel_serial.setBounds(12, 20, 183, 100);
+		panel.add(panel_serial);
+		panel_serial.setBorder(new TitledBorder(null, "Serieller Port", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_serial.setLayout(null);
+		
+		// serial port
+		serialPortList = new JComboBox();
+		serialPortList.setBounds(12, 20, 151, 18);
+		panel_serial.add(serialPortList);
+		
+		// serial pin
+		serialPin = new JComboBox();
+		serialPin.setBounds(12, 42, 151, 18);
+		panel_serial.add(serialPin);
+		serialPin.addItem("DTR"); // index 0 = SerialPortComm.DTR
+		serialPin.addItem("RTS");
+		
+		radioUseSerial = new JRadioButton("");
+		radioUseSerial.setSelected(true);
+		radioUseSerial.setBounds(154, 69, 21, 23);
+		radioUseSerial.setEnabled(false);
+		panel_serial.add(radioUseSerial);
+		
+		panel_gpio = new JPanel();
+		panel_gpio.setBounds(201, 20, 227, 100);
+		panel.add(panel_gpio);
+		panel_gpio.setBorder(new TitledBorder(null, "GPIO-Pin (RasPi)", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_gpio.setLayout(null);
+		panel_gpio.setEnabled(false);
+		
+		raspiList = new JComboBox();
+		raspiList.setBounds(12, 20, 203, 18);
+		panel_gpio.add(raspiList);
+		raspiList.addItem("Deaktiviert");
+		raspiList.setEnabled(false);
+		
+		gpioList = new JComboBox();
+		gpioList.setBounds(12, 42, 203, 18);
+		panel_gpio.add(gpioList);
+		gpioList.addItem("Deaktiviert");
+		gpioList.setEnabled(false);
+		
+		btnGpiopins = new JButton("GPIO-Pins");
+		btnGpiopins.setBounds(12, 70, 115, 18);
+		panel_gpio.add(btnGpiopins);
+		btnGpiopins.setEnabled(false);
+		
+		radioUseGpio = new JRadioButton("");
+		radioUseGpio.setBounds(194, 69, 21, 23);
+		panel_gpio.add(radioUseGpio);
+		radioUseGpio.setEnabled(true);
+		
+		radioUseGpio.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (radioUseGpio.isSelected()) {
+					radioUseGpio.setEnabled(false);
+					radioUseSerial.setEnabled(true);
+					radioUseSerial.setSelected(false);
+					panel_gpio.setEnabled(true);
+					panel_serial.setEnabled(false);
+					raspiList.setEnabled(true);
+					gpioList.setEnabled(true);
+					btnGpiopins.setEnabled(true);
+					
+					serialPortList.setEnabled(false);
+					serialPin.setEnabled(false);
+				}
+			}
+		});
+		btnGpiopins.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				EventQueue.invokeLater(new Runnable() {
+					public void run() {
+						try {
+							new GpioView().setVisible(true);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+			}
+		});
+		
+		raspiList.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				gpioList.removeAllItems();
+				gpioList.addItem("Deaktiviert");
+				
+				if (!(raspiList.getSelectedItem() instanceof BoardType)) return;
+				
+				for (Pin p : RaspiPin.allPins((BoardType)raspiList.getSelectedItem())) {
+					gpioList.addItem(p);
+				}
+			}
+		});		
+		
+		radioUseSerial.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (radioUseSerial.isSelected()) {
+					radioUseSerial.setEnabled(false);
+					radioUseGpio.setEnabled(true);
+					radioUseGpio.setSelected(false);
+					panel_serial.setEnabled(true);
+					panel_gpio.setEnabled(false);
+					serialPortList.setEnabled(true);
+					serialPin.setEnabled(true);
+					
+					raspiList.setEnabled(false);
+					gpioList.setEnabled(false);
+					btnGpiopins.setEnabled(false);
+				}
+			}
+		});
+		
+		// get available serial ports and add them to list
+		ArrayList<String> serialPorts = SerialPortComm.getPorts();
+		for(int i = 0; i < serialPorts.size(); i++) {
+			serialPortList.addItem(serialPorts.get(i));
+		}
+		
+		for (BoardType bt : BoardType.values()) {
+			raspiList.addItem(bt);
+		}		
+		
 		masterRemove.addActionListener(new ActionListener() {
-			
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// check if there is a selection
@@ -813,33 +847,6 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
-		btnGpiopins.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				EventQueue.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							new GpioView().setVisible(true);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
-			}
-		});
-		
-		raspiList.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				gpioList.removeAllItems();
-				gpioList.addItem("Deaktiviert");
-				
-				if (!(raspiList.getSelectedItem() instanceof BoardType)) return;
-				
-				for (Pin p : RaspiPin.allPins((BoardType)raspiList.getSelectedItem())) {
-					gpioList.addItem(p);
-				}
-			}
-		});		
 		
 		// show window
 		pack();
