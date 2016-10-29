@@ -11,7 +11,7 @@ import javax.swing.ImageIcon;
 
 public class GpioView extends JFrame {
 	private JPanel contentPane;
-	
+
 	public GpioView() {
 		setTitle("Raspberry Pi: GPIO");
 		setBounds(100, 100, 500, 907);
@@ -19,7 +19,7 @@ public class GpioView extends JFrame {
 		contentPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
-		
+
 		JLabel label = new JLabel("");
 		label.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/pi_gpio.png"))));
 		contentPane.add(label, BorderLayout.CENTER);

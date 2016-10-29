@@ -14,50 +14,54 @@ public class SearchScheduler extends Scheduler {
 	@Override
 	public void run() {
 		// if active
-		if(active) {
+		if (active) {
 			// increase time
 			this.time = ++this.time % this.max;
-			
+
 			// if serial delay is lower than or equals 0, decrease send time
-			if(this.serialDelay <= 0) {
-				if(this.sendTime > 0) this.sendTime -= 0.1f;
+			if (this.serialDelay <= 0) {
+				if (this.sendTime > 0)
+					this.sendTime -= 0.1f;
 			}
-			
+
 			// decrease serial delay
-			if(this.serialDelay > 0) this.serialDelay -= 100;
+			if (this.serialDelay > 0)
+				this.serialDelay -= 100;
 		}
-		
-		
+
 		// check slot
 		char slot = Main.timeSlots.getCurrentSlot(time);
 		boolean isLastSlot = Main.timeSlots.isLastSlot(slot);
-				
+
 		// if it is not the last slot
-		if(!isLastSlot) {
+		if (!isLastSlot) {
 			// draw slots
 			Main.drawSlots();
-		}						
-		
-		// if send time is lower than or equals 0
-		if(this.sendTime <= 0) {
-			// set pin (serial port) to off
-			if (Main.serialPortComm != null) Main.serialPortComm.setOff();
-			if (Main.gpioPortComm != null) Main.gpioPortComm.setOff();
 		}
-		
-		
+
+		// if send time is lower than or equals 0
+		if (this.sendTime <= 0) {
+			// set pin (serial port) to off
+			if (Main.serialPortComm != null)
+				Main.serialPortComm.setOff();
+			if (Main.gpioPortComm != null)
+				Main.gpioPortComm.setOff();
+		}
+
 		// if slot is not the last slot or it is the first time
-		if((!isLastSlot || firstTime)) {
+		if ((!isLastSlot || firstTime)) {
 			// get data (slotCount = 0, because it is not needed here)
 			getData(0);
-			
+
 			// set pin (serial port) to on
-			if (Main.serialPortComm != null) Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null) Main.gpioPortComm.setOn();
+			if (Main.serialPortComm != null)
+				Main.serialPortComm.setOn();
+			if (Main.gpioPortComm != null)
+				Main.gpioPortComm.setOn();
 		}
-		
+
 		// if serial delay is lower than or equals 0 and there is data
-		if(this.serialDelay <= 0 && data != null) {			
+		if (this.serialDelay <= 0 && data != null) {
 			// play data and set data to null
 			AudioEncoder.play(data);
 			data = null;
@@ -70,20 +74,20 @@ public class SearchScheduler extends Scheduler {
 		this.serialDelay = Main.config.getDelay();
 
 		// if it is not the first time
-		if(!firstTime) {
+		if (!firstTime) {
 			// is correction lower than 1.0?
-			if(AudioEncoder.correction < 1.0f) {
+			if (AudioEncoder.correction < 1.0f) {
 				log("correction: " + AudioEncoder.correction, Log.INFO, Log.NORMAL);
-					
+
 				// increase correction or set it to 1.0
-				if(AudioEncoder.correction + Main.getStepWidth() > 1.0f) {
+				if (AudioEncoder.correction + Main.getStepWidth() > 1.0f) {
 					AudioEncoder.correction = 1.0f;
 				} else {
 					AudioEncoder.correction += Main.getStepWidth();
 				}
-				
+
 				// if there is the main window
-				if(Main.mainWindow != null) {
+				if (Main.mainWindow != null) {
 					// update correction display
 					Main.mainWindow.updateCorrection();
 				}
@@ -95,58 +99,57 @@ public class SearchScheduler extends Scheduler {
 			// then next time wouldnt be the first time
 			firstTime = false;
 		}
-		
-		
+
 		// create data
 		data = new ArrayList<Integer>();
-		
+
 		// add praeambel
-		for(int i = 0; i < 18; i++) {
+		for (int i = 0; i < 18; i++) {
 			data.add(Pocsag.PRAEEMBEL);
 		}
 
-			
 		// create time message
-		//#00 6:1:ADDRESS:3:MESSAGE
+		// #00 6:1:ADDRESS:3:MESSAGE
 		String skyperAddress = Main.getSkyperAddress();
-		
+
 		// send time
 		addMessage(new Message(("#00 5:1:9C8:0:000000   010112").split(":")));
-		
+
 		// send message to skyper address
-		if(!skyperAddress.equals("")) {
-			addMessage(new Message(("#00 6:1:" + skyperAddress + ":3:correction=" + String.format("%+4.2f", AudioEncoder.correction)).split(":")));
+		if (!skyperAddress.equals("")) {
+			addMessage(new Message(
+					("#00 6:1:" + skyperAddress + ":3:correction=" + String.format("%+4.2f", AudioEncoder.correction))
+							.split(":")));
 		}
-		
-		
-		
+
 		// set send time
 		this.sendTime = data.size() * 2f / 75f + 0.1;
 	}
-	
+
 	private void addMessage(Message message) {
 		// add sync-word (start of batch)
 		data.add(Pocsag.SYNC);
-		
+
 		// get codewords of message
 		ArrayList<Integer> cwBuf = message.getCodeWords();
 		int framePos = cwBuf.get(0);
-		
+
 		// add idle-words until frame position is reached
-		for(int c = 0; c < framePos; c++) {
+		for (int c = 0; c < framePos; c++) {
 			data.add(Pocsag.IDLE);
 			data.add(Pocsag.IDLE);
 		}
-			
+
 		// add codewords of message
-		for(int c = 1; c < cwBuf.size(); c++) {
-			if((data.size() - 18) % 17 == 0) data.add(Pocsag.SYNC);
-			
+		for (int c = 1; c < cwBuf.size(); c++) {
+			if ((data.size() - 18) % 17 == 0)
+				data.add(Pocsag.SYNC);
+
 			data.add(cwBuf.get(c));
 		}
-			
+
 		// fill last batch with idle-words
-		while((data.size() - 18) % 17 != 0) {
+		while ((data.size() - 18) % 17 != 0) {
 			data.add(Pocsag.IDLE);
 		}
 	}

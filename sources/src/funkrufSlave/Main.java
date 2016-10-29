@@ -7,7 +7,9 @@ import gnu.io.UnsupportedCommOperationException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Deque;
 import java.util.Timer;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import com.pi4j.io.gpio.Pin;
 
@@ -15,7 +17,7 @@ public class Main {
 	public static final String VERSION = "1.3";
 
 	public static ServerThread server;
-	public static MessageQueue messageQueue;
+	public static Deque<Message> messageQueue;
 	public static Timer timer;
 	public static Scheduler scheduler;
 	public static TimeSlots timeSlots;
@@ -223,7 +225,7 @@ public class Main {
 			gpioPortComm = new GpioPortComm(Main.config.getGpioPin(), Main.config.getInvert(), log);
 			return true;
 		}
-		
+
 		log("startServer # GPIO-Schnittstelle konnte nicht initialisiert werden!", Log.ERROR);
 
 		if (mainWindow != null) {
@@ -256,7 +258,7 @@ public class Main {
 			}
 			return;
 		}
-		
+
 		timer.schedule(scheduler, 100, 100);
 	}
 
@@ -288,7 +290,7 @@ public class Main {
 	public static void startServer(boolean join) {
 		if (messageQueue == null) {
 			// initialize messageQueue
-			messageQueue = new MessageQueue();
+			messageQueue = new ConcurrentLinkedDeque<>();
 		}
 
 		if (server == null) {

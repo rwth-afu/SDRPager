@@ -275,9 +275,9 @@ public class Config {
 				"# GPIO-Pin: RasPi-Typ / GPIO-Pin",
 				"gpio=" + (this.raspi != null ? this.raspi.toString() : "-") + " / "
 						+ (this.gpioPin != null ? this.gpioPin.getName() : "-"),
-				"# Weitere Konfiguration von Serial und GPIO", "use=" + (this.useSerial ? "serial" : "gpio"), "invert=" + (this.invert ? "1" : "0"),
-				"delay=" + this.delay, "# Sound Device", "sounddevice=" + this.soundDevice.getName(), "# LogLevel",
-				"loglevel=" + this.logLevel };
+				"# Weitere Konfiguration von Serial und GPIO", "use=" + (this.useSerial ? "serial" : "gpio"),
+				"invert=" + (this.invert ? "1" : "0"), "delay=" + this.delay, "# Sound Device",
+				"sounddevice=" + this.soundDevice.getName(), "# LogLevel", "loglevel=" + this.logLevel };
 
 		for (int i = 0; i < lines.length; i++) {
 			writer.println(lines[i]);
@@ -340,7 +340,7 @@ public class Config {
 	public void setGpio(Pin pin) {
 		this.gpioPin = pin;
 	}
-	
+
 	public void setUseSerial(boolean useSerial) {
 		this.useSerial = useSerial;
 	}
@@ -372,11 +372,11 @@ public class Config {
 	public Pin getGpioPin() {
 		return this.gpioPin;
 	}
-	
+
 	public boolean useSerial() {
 		return this.useSerial;
 	}
-	
+
 	public boolean useGpio() {
 		return !this.useSerial;
 	}

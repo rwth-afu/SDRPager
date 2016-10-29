@@ -37,7 +37,7 @@ public class GpioPortComm {
 		this.gpio = GpioFactory.getInstance();
 		this.gpioPin = this.gpio.provisionDigitalOutputPin(pin, "FunkrufSlave", PinState.LOW);
 		this.gpioPin.setShutdownOptions(true, PinState.LOW);
-		
+
 		this.curOn = false;
 	}
 
@@ -64,12 +64,12 @@ public class GpioPortComm {
 		if (on && !curOn) {
 			gpioPin.low();
 			this.curOn = true;
-			
+
 			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to on", Log.INFO);
 		} else if (!on && curOn) {
 			gpioPin.high();
 			this.curOn = false;
-			
+
 			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to off", Log.INFO);
 		}
 	}
