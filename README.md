@@ -5,6 +5,7 @@ POCSAG pager software based on soundcard generation of baseband signal
 * Ralf Wilke DH3WR, Aachen
 * Michael Delissen, Aachen
 * Marvin Menzerath, Aachen
+* Philipp Thiel DL6PT, Aachen
 
 This software is released free of charge under the Creative Commons License of type "by-nc-sa". No commercial use
 is allowed.
