@@ -1,0 +1,19 @@
+#[slave config]
+# Port
+port=1337
+# Erlaubte Master getrennt durch Leerzeichen
+master=44.225.164.2
+# Korrekturfaktor
+correction=0.5
+# Serial: Port, Pin
+serial=- DTR
+# GPIO-Pin: RasPi-Typ / GPIO-Pin
+gpio=RaspberryPi_B_Rev1 / GPIO 0
+# Weitere Konfiguration von Serial und GPIO
+use=gpio
+invert=1
+delay=80
+# Sound Device
+sounddevice=ALSA [plughw:0,1]
+# LogLevel
+loglevel=0
