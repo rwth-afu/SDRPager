@@ -50,7 +50,7 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 			handleMessage(ctx, request);
 			break;
 		case '2':
-			handleMasterIdent(ctx, request);
+			handleMasterIdentify(ctx, request);
 			break;
 		case '3':
 			handleTimeCorrection(ctx, request);
@@ -100,7 +100,7 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 	 * @param request
 	 *            Request
 	 */
-	private void handleMasterIdent(ChannelHandlerContext ctx, String request) {
+	private void handleMasterIdentify(ChannelHandlerContext ctx, String request) {
 		try {
 			String[] parts = request.split(":", 2);
 			// TODO impl

@@ -8,7 +8,7 @@ final class Message {
 	private final int address;
 	private final int function;
 	private final String text;
-	private List<Integer> codeWords; // 0 = framePos, 1 = cw, 2 = cw, ...
+	private final List<Integer> codeWords; // 0 = framePos, 1 = cw, 2 = cw, ...
 
 	public Message(String str) {
 		this(str.split(":", 5));
