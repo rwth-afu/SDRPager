@@ -1,15 +1,18 @@
 package de.rwth_aachen.afu.raspager;
 
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-
 public class SerialPortComm {
+	private static final Logger log = Logger.getLogger(SerialPortComm.class.getName());
 	// pins
 	public static final int DTR = 0;
 	public static final int RTS = 1;
@@ -19,27 +22,10 @@ public class SerialPortComm {
 	private int pin = DTR;
 	private boolean invert = false;
 
-	private Log log = null;
-
-	// write message into log file (log level normal)
-	private void log(String message, int type) {
-		log(message, type, Log.DEBUG_SENDING);
-	}
-
-	// write message with given log level into log file
-	private void log(String message, int type, int level) {
-		// is there a log file?
-		if (log != null) {
-			// write message with given log level into log file
-			log.println(message, type, level);
-		}
-	}
-
 	// constructor
-	public SerialPortComm(String portName, int pin, boolean invert, Log log)
+	public SerialPortComm(String portName, int pin, boolean invert)
 			throws NoSuchPortException, PortInUseException, UnsupportedCommOperationException {
 		// set current settings
-		this.log = log;
 		this.pin = pin;
 		this.invert = invert;
 
@@ -75,7 +61,7 @@ public class SerialPortComm {
 	// set pin status
 	private void setStatus(boolean on) {
 		if (serialPort == null) {
-			log("SerialPortComm # setStatus - serialPort ist null", Log.ERROR);
+			log.severe("Serial port is null.");
 			return;
 		}
 
@@ -84,13 +70,13 @@ public class SerialPortComm {
 		case DTR:
 			if (serialPort.isDTR() != on) {
 				serialPort.setDTR(on);
-				log("SerialPortComm # Set DTR to " + (on ? "on" : "off"), Log.INFO);
+				log.log(Level.FINE, "Set DTR to {0}.", on ? "on" : "off");
 			}
 			break;
 		case RTS:
 			if (serialPort.isRTS() != on) {
 				serialPort.setRTS(on);
-				log("SerialPortComm # Set RTS to " + (on ? "on" : "off"), Log.INFO);
+				log.log(Level.FINE, "Set RTS to {0}.", on ? "on" : "off");
 			}
 			break;
 		}

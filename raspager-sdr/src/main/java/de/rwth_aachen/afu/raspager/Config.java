@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
@@ -16,6 +17,7 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 
 public class Config {
+	private static final Logger log = Logger.getLogger(Config.class.getName());
 
 	// default
 	private final String DEFAULT_NAME = "[SDRPager v1.2-SCP-#2345678]";
@@ -28,7 +30,6 @@ public class Config {
 	// current
 	private String name = DEFAULT_NAME;
 	private int port = 0;
-	private int logLevel = Log.NORMAL;
 	private String[] master = null;
 
 	private int serialPin = DEFAULT_SERIAL_PIN;
@@ -40,37 +41,13 @@ public class Config {
 	private int delay = 0;
 	private Mixer.Info soundDevice = AudioSystem.getMixerInfo()[0];
 
-	// log
-	private Log log = null;
-
-	public Config(Log log) {
-		this.log = log;
+	public Config() {
 	}
 
-	public Config(Log log, String filename) throws InvalidConfigFileException {
-		this.log = log;
-
+	public Config(String filename) throws InvalidConfigFileException {
 		if (filename != null && !filename.equals("")) {
 			load(filename);
 		}
-	}
-
-	public void setLog(Log log) {
-		this.log = log;
-
-		this.log.setLogLevel(this.logLevel);
-	}
-
-	private void log(String message, int type) {
-		log(message, type, Log.NORMAL);
-	}
-
-	private void log(String message, int type, int logLevel) {
-
-		if (this.log != null) {
-			this.log.println(message, type, logLevel);
-		}
-
 	}
 
 	public void load(String filename) throws InvalidConfigFileException {
@@ -89,12 +66,12 @@ public class Config {
 				String s = sc.nextLine();
 
 				if (s.charAt(0) == '#') {
-					log("Kommentar: " + s, Log.INFO);
+					// log("Kommentar: " + s, Log.INFO);
 					continue;
 				}
 
 				if (s.indexOf("=") < 1) {
-					log("Zeile ignoriert (kein = ): " + s, Log.INFO);
+					// log("Zeile ignoriert (kein = ): " + s, Log.INFO);
 					continue;
 				}
 
@@ -116,8 +93,10 @@ public class Config {
 
 							this.port = DEFAULT_PORT;
 
-							log("Port ist auf keinen gueltigen Wert gesetzt!", Log.ERROR);
-							log("Verwende Default-Port (" + this.DEFAULT_PORT + ") ...", Log.INFO);
+							// log("Port ist auf keinen gueltigen Wert
+							// gesetzt!", Log.ERROR);
+							// log("Verwende Default-Port (" + this.DEFAULT_PORT
+							// + ") ...", Log.INFO);
 
 						}
 
@@ -128,7 +107,7 @@ public class Config {
 						setMaster(p[1]);
 					} else {
 
-						log("Keine Master angegeben!", Log.INFO);
+						// log("Keine Master angegeben!", Log.INFO);
 					}
 
 				} else if (p[0].equals("correction")) {
@@ -140,37 +119,20 @@ public class Config {
 							// default value
 							AudioEncoder.correction = AudioEncoder.DEFAULT_CORRECTION;
 
-							log("Korrekturfaktor ist auf keinen gueltigen Wert gesetzt!", Log.ERROR);
-							log("Verwende Default-Faktor (" + AudioEncoder.DEFAULT_CORRECTION + ") ...", Log.INFO);
+							// log("Korrekturfaktor ist auf keinen gueltigen
+							// Wert gesetzt!", Log.ERROR);
+							// log("Verwende Default-Faktor (" +
+							// AudioEncoder.DEFAULT_CORRECTION + ") ...",
+							// Log.INFO);
 
-						}
-					}
-
-				} else if (p[0].equals("loglevel")) {
-					if (p.length > 1) {
-						try {
-							this.logLevel = Integer.parseInt(p[1]);
-							if (!Log.correctLogLevel(this.logLevel)) {
-								throw new NumberFormatException();
-							}
-						} catch (NumberFormatException e) {
-							// default value
-							this.logLevel = this.DEFAULT_LOGLEVEL;
-
-							log("LogLevel ist auf keinen gueltigen Wert gesetzt!", Log.ERROR);
-							log("Verwende Default-LogLevel (" + DEFAULT_LOGLEVEL + ") ...", Log.INFO);
-						}
-
-						if (this.log != null) {
-							this.log.setLogLevel(this.logLevel);
 						}
 					}
 				} else if (p[0].equals("serial")) {
 					if (p.length > 1) {
 						String[] pp = p[1].split(" ");
 						if (pp.length < 2) {
-							log("serial ist nicht gueltig.", Log.ERROR);
-							log("Verwende Default-Serial...", Log.INFO);
+							// log("serial ist nicht gueltig.", Log.ERROR);
+							// log("Verwende Default-Serial...", Log.INFO);
 							continue;
 						}
 
@@ -183,8 +145,9 @@ public class Config {
 						} else {
 							this.serialPin = DEFAULT_SERIAL_PIN;
 
-							log("serialPin ist auf keinen gueltigen Wert gesetzt!", Log.ERROR);
-							log("Verwende Default-SerialPin...", Log.INFO);
+							// log("serialPin ist auf keinen gueltigen Wert
+							// gesetzt!", Log.ERROR);
+							// log("Verwende Default-SerialPin...", Log.INFO);
 						}
 					}
 				} else if (p[0].equals("gpio")) {
@@ -193,13 +156,15 @@ public class Config {
 						if (pp[0].equals("-") || pp[0].equals("-")) {
 							setRaspi(null);
 							setGpio(null);
-							log("Kein Raspi / GPIO gewünscht! Funktion deaktiviert...", Log.INFO);
+							// log("Kein Raspi / GPIO gewünscht! Funktion
+							// deaktiviert...", Log.INFO);
 						} else {
 							setRaspi(BoardType.valueOf(pp[0]));
 							setGpio(RaspiPin.getPinByName(pp[1]));
 						}
 					} else {
-						log("Kein Raspi-Typ / GPIO-Pin angegeben!", Log.INFO);
+						// log("Kein Raspi-Typ / GPIO-Pin angegeben!",
+						// Log.INFO);
 					}
 				} else if (p[0].equals("use")) {
 					if (p.length > 1) {
@@ -214,8 +179,10 @@ public class Config {
 						try {
 							this.delay = Integer.parseInt(p[1]);
 						} catch (NumberFormatException e) {
-							log("Delay ist auf keinen gueltigen Wert gesetzt!", Log.ERROR);
-							log("Verwende Default-Delay (0 ms)...", Log.INFO);
+							// log("Delay ist auf keinen gueltigen Wert
+							// gesetzt!", Log.ERROR);
+							// log("Verwende Default-Delay (0 ms)...",
+							// Log.INFO);
 						}
 					}
 				} else if (p[0].equals("sounddevice")) {
@@ -231,10 +198,11 @@ public class Config {
 						}
 
 						if (!found) {
-							log("Angegebenes Sound Device nicht gefunden!", Log.INFO);
+							// log("Angegebenes Sound Device nicht gefunden!",
+							// Log.INFO);
 						}
 					} else {
-						log("Kein Sound Device angegeben!", Log.INFO);
+						// log("Kein Sound Device angegeben!", Log.INFO);
 					}
 				}
 			}
@@ -242,26 +210,28 @@ public class Config {
 			sc.close();
 
 		} catch (FileNotFoundException e) {
-			log(filename + " konnte nicht gefunden/geoeffnet werden!", Log.ERROR);
-			log("Verwende Default-Werte ...", Log.INFO);
-			log("Diese Konfiguration filtert keine Master!", Log.INFO);
+			// log(filename + " konnte nicht gefunden/geoeffnet werden!",
+			// Log.ERROR);
+			// log("Verwende Default-Werte ...", Log.INFO);
+			// log("Diese Konfiguration filtert keine Master!", Log.INFO);
 		}
 
 		if (this.name == null) {
 			this.name = this.DEFAULT_NAME;
 
-			log("Kein Name angegeben!", Log.ERROR);
-			log("Verwende Default-Name ([SDR-Pager v1.2-SCP-#2345678]) ...", Log.INFO);
+			// log("Kein Name angegeben!", Log.ERROR);
+			// log("Verwende Default-Name ([SDR-Pager v1.2-SCP-#2345678]) ...",
+			// Log.INFO);
 		}
 
 		if (this.port == 0) {
 			this.port = this.DEFAULT_PORT;
 
-			log("Kein Port angegeben!", Log.ERROR);
-			log("Verwende Default-Port (1337) ...", Log.INFO);
+			// log("Kein Port angegeben!", Log.ERROR);
+			// log("Verwende Default-Port (1337) ...", Log.INFO);
 		}
 
-		log(this.toString(), Log.INFO);
+		// log(this.toString(), Log.INFO);
 	}
 
 	public void save(String filename) throws FileNotFoundException {
@@ -277,7 +247,7 @@ public class Config {
 						+ (this.gpioPin != null ? this.gpioPin.getName() : "-"),
 				"# Weitere Konfiguration von Serial und GPIO", "use=" + (this.useSerial ? "serial" : "gpio"),
 				"invert=" + (this.invert ? "1" : "0"), "delay=" + this.delay, "# Sound Device",
-				"sounddevice=" + this.soundDevice.getName(), "# LogLevel", "loglevel=" + this.logLevel };
+				"sounddevice=" + this.soundDevice.getName() };
 
 		for (int i = 0; i < lines.length; i++) {
 			writer.println(lines[i]);
@@ -293,7 +263,6 @@ public class Config {
 	public void loadDefault(boolean resetMaster) {
 		this.name = DEFAULT_NAME;
 		this.port = DEFAULT_PORT;
-		this.logLevel = DEFAULT_LOGLEVEL;
 
 		if (resetMaster) {
 			this.master = null;
@@ -314,18 +283,6 @@ public class Config {
 
 	public void setPort(int port) {
 		this.port = port;
-	}
-
-	public int getLogLevel() {
-		return this.logLevel;
-	}
-
-	public void setLogLevel(int logLevel) {
-		this.logLevel = logLevel;
-
-		if (this.log != null) {
-			this.log.setLogLevel(logLevel);
-		}
 	}
 
 	public void setSerial(String port, int pin) {
@@ -406,7 +363,7 @@ public class Config {
 
 				if (i > Arrays.asList(p).indexOf(p[i])) {
 
-					log("Doppelter Master: " + p[i], Log.INFO);
+					// log("Doppelter Master: " + p[i], Log.INFO);
 					p[i] = "";
 
 				} else {
@@ -418,7 +375,7 @@ public class Config {
 
 			} catch (UnknownHostException e) {
 
-				log("Unbekannter Host: " + p[i], Log.ERROR);
+				// log("Unbekannter Host: " + p[i], Log.ERROR);
 				p[i] = "";
 
 			}
@@ -429,7 +386,7 @@ public class Config {
 		for (int i = 0, j = 0; i < p.length; i++) {
 			if (!p[i].equals("")) {
 				this.master[j] = p[i];
-				log("Master eingetragen: " + this.master[j], Log.INFO);
+				// log("Master eingetragen: " + this.master[j], Log.INFO);
 				j++;
 			}
 		}
@@ -488,7 +445,6 @@ public class Config {
 		s += "invert=" + (this.invert ? "1" : "0") + "\n";
 		s += "delay=" + this.delay + "\n";
 		s += "sounddevice=" + this.soundDevice.getName() + "\n";
-		s += "loglevel=" + this.logLevel + "\n";
 
 		return s;
 	}

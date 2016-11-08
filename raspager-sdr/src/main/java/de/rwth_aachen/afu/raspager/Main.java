@@ -6,6 +6,8 @@ import java.io.PrintStream;
 import java.util.Deque;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,7 +23,8 @@ import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
 public class Main {
-	public static final String VERSION = "1.4.0";
+	private static final Logger log = Logger.getLogger(Main.class.getName());
+	private static final String VERSION = "1.4.0";
 
 	// TODO Get rid of all these static global vars
 	public static ThreadWrapper<FunkrufServer> server;
@@ -38,20 +41,9 @@ public class Main {
 	public static boolean running = false;
 
 	public static Config config = null;
-	public static Log log = null;
 
 	public static final float DEFAULT_SEARCH_STEP_WIDTH = 0.05f;
 	public static float searchStepWidth = DEFAULT_SEARCH_STEP_WIDTH;
-
-	private static void log(String message, int type) {
-		log(message, type, Log.NORMAL);
-	}
-
-	private static void log(String message, int type, int logLevel) {
-		if (log != null) {
-			log.println(message, type, logLevel);
-		}
-	}
 
 	private static void parseArguments(String[] args) {
 		Options opts = new Options();
@@ -93,7 +85,7 @@ public class Main {
 		// Config file
 		try {
 			String filename = line.getOptionValue('c', "raspager.properties");
-			config = new Config(log, filename);
+			config = new Config(filename);
 		} catch (InvalidConfigFileException ex) {
 			ex.printStackTrace();
 			return;
@@ -113,10 +105,10 @@ public class Main {
 			try {
 				// initialize serial port
 				serialPortComm = new SerialPortComm(Main.config.getSerialPort(), Main.config.getSerialPin(),
-						Main.config.getInvert(), log);
+						Main.config.getInvert());
 			} catch (NoSuchPortException e) {
 				// no such port exception
-				log("startServer # Serieller Port existiert nicht!", Log.ERROR);
+				log.log(Level.SEVERE, "Serial port does not exist.", e);
 
 				if (mainWindow != null) {
 					mainWindow.showError("Server starten", "Serieller Port existiert nicht!");
@@ -126,7 +118,7 @@ public class Main {
 
 			} catch (PortInUseException e) {
 				// port in use exception
-				log("startServer # Serieller Port wird bereits genutzt!", Log.ERROR);
+				log.log(Level.SEVERE, "Serial port already in use.", e);
 
 				if (mainWindow != null) {
 					mainWindow.showError("Server starten", "Serieller Port wird bereits benutzt!");
@@ -136,7 +128,7 @@ public class Main {
 
 			} catch (UnsupportedCommOperationException e) {
 				// unsupported comm operation exception
-				log("startServer # UnsupportedCommOperation!", Log.ERROR);
+				log.log(Level.SEVERE, "Unsupported comm operation.", e);
 
 				if (mainWindow != null) {
 					mainWindow.showError("Server starten",
@@ -155,24 +147,26 @@ public class Main {
 			return true;
 
 		if (Main.config.getGpioPin() == null || !(Main.config.getGpioPin() instanceof Pin)) {
-			log("startServer # GPIO-Pin existiert nicht!", Log.ERROR);
+			log.severe("GPIO pin does not exist.");
 
 			if (mainWindow != null) {
 				mainWindow.showError("Server starten", "GPIO-Pin existiert nicht!");
 			}
+
 			return false;
 		}
 
 		if (gpioPortComm == null) {
-			gpioPortComm = new GpioPortComm(Main.config.getGpioPin(), Main.config.getInvert(), log);
+			gpioPortComm = new GpioPortComm(Main.config.getGpioPin(), Main.config.getInvert());
 			return true;
 		}
 
-		log("startServer # GPIO-Schnittstelle konnte nicht initialisiert werden!", Log.ERROR);
+		log.severe("Failed to initialize GPIO port.");
 
 		if (mainWindow != null) {
 			mainWindow.showError("Server starten", "GPIO-Schnittstelle konnte nicht initialisiert werden!");
 		}
+
 		return false;
 	}
 
@@ -246,7 +240,7 @@ public class Main {
 
 		// set running to true
 		running = true;
-		log("Server is running.", Log.INFO);
+		log.info("Server is running.");
 
 		// if join is true
 		if (join) {
@@ -254,7 +248,7 @@ public class Main {
 				// join server thread
 				server.join();
 			} catch (InterruptedException e) {
-				log("ServerThread interrupted", Log.INFO);
+				log.log(Level.SEVERE, "Server thread interrupted.", e);
 			}
 
 			// stop server
@@ -269,7 +263,7 @@ public class Main {
 	}
 
 	public static void stopServer(boolean error) {
-		log("Server is going to shutdown.", Log.INFO);
+		log.info("Server is shutting down.");
 
 		// if there was no error, halt server
 		if (server != null) {
@@ -288,16 +282,10 @@ public class Main {
 			messageQueue = null;
 		}
 
-		log("Server halted.", Log.INFO);
+		log.info("Server stopped.");
 
-		// if there is no gui, the log has to be closed
-		if (!gui) {
-			log.close();
-		} else {
-			// if there is a gui, the start button has to be reseted
-			if (mainWindow != null) {
-				mainWindow.resetButtons();
-			}
+		if (gui && mainWindow != null) {
+			mainWindow.resetButtons();
 		}
 	}
 
@@ -330,7 +318,7 @@ public class Main {
 		}
 	}
 
-	public static float getStepWidth() {
+	public static float getStepSize() {
 		float stepWidth = searchStepWidth;
 
 		if (mainWindow != null) {
@@ -340,7 +328,7 @@ public class Main {
 				try {
 					stepWidth = Float.parseFloat(s);
 				} catch (NumberFormatException e) {
-					log("stepWidth # Keine gueltige Schrittweite!", Log.ERROR);
+					log.log(Level.SEVERE, "Invalid step size.", e);
 				}
 			}
 		}
@@ -360,7 +348,7 @@ public class Main {
 					s = Integer.toString(i, 16);
 					System.out.println("Adresse (BC1F): " + s);
 				} catch (NumberFormatException e) {
-					log("skyperAddress # Keine gueltige Skyper-Adresse!", Log.ERROR);
+					log.log(Level.SEVERE, "Invalid Skyper address.", e);
 				}
 			}
 		}
@@ -372,12 +360,6 @@ public class Main {
 		if (serialPortComm != null) {
 			serialPortComm.close();
 			serialPortComm = null;
-		}
-	}
-
-	public static void closeLog() {
-		if (log != null) {
-			log.close();
 		}
 	}
 
@@ -405,7 +387,7 @@ public class Main {
 
 		// load config, if not loaded
 		if (config == null) {
-			config = new Config(log);
+			config = new Config();
 			config.loadDefault();
 		}
 
@@ -418,7 +400,7 @@ public class Main {
 		// if gui
 		if (gui) {
 			// create mainWindow
-			mainWindow = new MainWindow(log);
+			mainWindow = new MainWindow();
 		} else {
 			// if no gui, start server and join
 			startServer(true);

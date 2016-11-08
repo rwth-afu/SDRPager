@@ -84,10 +84,10 @@ class SearchScheduler extends Scheduler {
 				log.log(Level.FINE, "Correction: {0}", AudioEncoder.correction);
 
 				// increase correction or set it to 1.0
-				if (AudioEncoder.correction + Main.getStepWidth() > 1.0f) {
+				if (AudioEncoder.correction + Main.getStepSize() > 1.0f) {
 					AudioEncoder.correction = 1.0f;
 				} else {
-					AudioEncoder.correction += Main.getStepWidth();
+					AudioEncoder.correction += Main.getStepSize();
 				}
 
 				// if there is the main window

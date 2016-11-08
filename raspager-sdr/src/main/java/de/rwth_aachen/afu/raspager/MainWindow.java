@@ -26,6 +26,8 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
@@ -52,6 +54,7 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 
 public class MainWindow extends JFrame {
+	private static final Logger log = Logger.getLogger(MainWindow.class.getName());
 	private static final long serialVersionUID = 1L;
 
 	private JPanel main;
@@ -86,25 +89,8 @@ public class MainWindow extends JFrame {
 	private JButton searchStop;
 	private JTextField searchAddress;
 
-	private Log log = null;
-
-	// write message into log file (log level normal)
-	private void log(String message, int type) {
-		log(message, type, Log.NORMAL);
-	}
-
-	// write message with given log level into log file
-	private void log(String message, int type, int logLevel) {
-		if (this.log != null) {
-			this.log.println(message, type, logLevel);
-		}
-	}
-
 	// constructor
-	public MainWindow(Log log) {
-		// set log
-		this.log = log;
-
+	public MainWindow() {
 		// set window preferences
 		setTitle("FunkrufSlave");
 		setResizable(false);
@@ -137,7 +123,6 @@ public class MainWindow extends JFrame {
 				}
 
 				// close log and serial port
-				Main.closeLog();
 				Main.closeSerialPort();
 
 				// dispose window
@@ -583,7 +568,7 @@ public class MainWindow extends JFrame {
 					} catch (InvalidConfigFileException e) {
 						// catch errors
 						showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
-						log("Load Config # Keine gueltige config-Datei", Log.ERROR);
+						log.log(Level.SEVERE, "Invalid configuration file.", e);
 
 						return;
 					}
@@ -625,7 +610,7 @@ public class MainWindow extends JFrame {
 						// catch errors
 						showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
 
-						log("Save Config # Konnte config-Datei nicht speichern", Log.ERROR);
+						log.log(Level.SEVERE, "Failed to save configuration file.", e);
 
 						return;
 					}
@@ -877,7 +862,7 @@ public class MainWindow extends JFrame {
 		try {
 			SystemTray.getSystemTray().add(trayIcon);
 		} catch (AWTException e) {
-			log("Kann TrayIcon nicht erstellen!", Log.INFO);
+			log.warning("Failed to add tray icon.");
 		}
 
 	}
