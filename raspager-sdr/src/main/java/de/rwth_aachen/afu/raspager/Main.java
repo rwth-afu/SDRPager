@@ -7,6 +7,13 @@ import java.util.Deque;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import com.pi4j.io.gpio.Pin;
 
 import gnu.io.NoSuchPortException;
@@ -14,10 +21,11 @@ import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
 public class Main {
-	public static final String VERSION = "1.3";
+	public static final String VERSION = "1.4.0";
 
+	// TODO Get rid of all these static global vars
 	public static ThreadWrapper<FunkrufServer> server;
-	public static Deque<Message> messageQueue;
+	private static Deque<Message> messageQueue;
 	public static Timer timer;
 	public static Scheduler scheduler;
 	public static TimeSlots timeSlots;
@@ -45,125 +53,59 @@ public class Main {
 		}
 	}
 
-	public static void printHelp() {
-		System.out.println(
-				"syntax: FunkrufSlave.jar [-nogui] [-logfile=logfile] [-configfile=configfile] [-v] [-loglevel=loglevel]");
-		System.out.println("-nogui\t\t\tConsole only, no gui");
-		System.out.println("-logfile=logfile\tWrite log information into logfile");
-		System.out.println("-configfile=configfile\tLoad given configfile and use it");
-		System.out.println(
-				"-v, -verbose\t\tWrite log information to console (if in combination with -logfile, log information will be written to logfile AND console)");
-		System.out.println("-loglevel=loglevel\tOverwrite loglevel with the given one");
-	}
+	private static void parseArguments(String[] args) {
+		Options opts = new Options();
+		opts.addOption("c", "config", true, "Configuration file to use.");
+		opts.addOption("h", "help", false, "Show this help.");
+		opts.addOption("v", "version", false, "Show version infomration.");
+		opts.addOption("s", "service", false, "Run as a service without a GUI.");
+		// TODO Remove legacy stuff once config is using settings.cl
 
-	// parse command line arguments
-	public static void parseArguments(String[] args) {
-		// valid parameters
-		// -nogui, -logfile=, -configfile=, -v, -verbose
-
-		String logfile = "";
-		String configfile = "";
-		int loglevel = -1;
-		boolean verbose = false;
-
-		for (int i = 0; i < args.length; i++) {
-
-			String[] parts = args[i].split("=");
-
-			// parameter -nogui
-			if (parts[0].equals("-nogui")) {
-
-				log("Parameter: nogui", Log.INFO);
-				gui = false;
-
-			}
-			// parameter -logfile=...
-			else if (parts[0].equals("-logfile") && parts.length == 2) {
-
-				// logfile
-				log("Parameter: logFile", Log.INFO);
-				logfile = parts[1];
-
-			}
-			// parameter -loglevel=
-			else if (parts[0].equals("-loglevel") && parts.length == 2) {
-				log("Parameter: loglevel", Log.INFO);
-				try {
-					loglevel = Integer.parseInt(parts[1]);
-				} catch (NumberFormatException e) {
-					log("Loglevel hat kein gültiges Format!", Log.ERROR);
-					loglevel = -1;
-				}
-			}
-			// parameter -configfile=...
-			else if (parts[0].equals("-configfile") && parts.length == 2) {
-
-				// config file
-				log("Parameter: configFile", Log.INFO);
-				configfile = parts[1];
-
-			}
-			// parameter -v or -verbose
-			else if (parts[0].equals("-v") || parts[0].equals("-verbose")) {
-				log("Parameter: verbose", Log.INFO);
-				verbose = true;
-			}
-			// version
-			else if (parts[0].equals("-version")) {
-				System.out.println("FunkrufSlave - Version " + VERSION);
-
-				System.exit(0);
-			}
-			// help
-			else if (parts[0].equals("--help") || parts[0].equals("-help") || parts[0].equals("-h")) {
-				printHelp();
-
-				System.exit(0);
-			}
-			// invalid parameter
-			else {
-				log("Parameter: Invalid # " + args[i], Log.ERROR);
-			}
-
+		CommandLineParser parser = new DefaultParser();
+		CommandLine line = null;
+		try {
+			line = parser.parse(opts, args);
+		} catch (ParseException ex) {
+			ex.printStackTrace();
+			return;
 		}
 
-		if (!logfile.equals("") || verbose) {
-			log = new Log(logfile, verbose);
+		// Show help
+		if (line.hasOption('h')) {
+			HelpFormatter fmt = new HelpFormatter();
+			fmt.printHelp("raspager-sdr", opts);
+			return;
 		}
 
-		if (!configfile.equals("")) {
-			try {
-				config = new Config(log, configfile);
-			} catch (InvalidConfigFileException e) {
-				log(e.getMessage(), Log.ERROR);
-			}
-		} else if (!gui) {
-			System.out.println(
-					"Damit der FunkrufSlave ohne GUI gestartet werden kann, muss eine Konfigurationsdatei angegeben werden! -configfile=/foo/bar");
-			System.exit(1);
+		// Show version
+		if (line.hasOption('v')) {
+			// TODO impl
+			return;
 		}
 
-		if (loglevel != -1) {
-			if (log != null) {
-				log.setLogLevel(loglevel);
-			}
+		// TODO
+		// Start as a service
+		// boolean gui = true;
+		// if (line.hasOption('s')) {
+		// gui = false;
+		// }
+
+		// Config file
+		try {
+			String filename = line.getOptionValue('c', "raspager.properties");
+			config = new Config(log, filename);
+		} catch (InvalidConfigFileException ex) {
+			ex.printStackTrace();
+			return;
 		}
 	}
 
-	// set connection status
-	public static void setStatus(boolean status) {
-		if (mainWindow != null) {
-			mainWindow.setStatus(status);
-		}
-	}
-
-	// initialize
-	public static void initialize() {
+	private static void initialize() {
 		// initialize timeSlots
 		timeSlots = new TimeSlots();
 	}
 
-	public static boolean initSerialPortComm() {
+	private static boolean initSerialPortComm() {
 		if (!Main.config.useSerial())
 			return true;
 
@@ -208,7 +150,7 @@ public class Main {
 		return true;
 	}
 
-	public static boolean initGpioPortComm() {
+	private static boolean initGpioPortComm() {
 		if (!Main.config.useGpio())
 			return true;
 
@@ -238,7 +180,7 @@ public class Main {
 	public static void startScheduler(boolean searching) {
 		if (timer == null) {
 			timer = new Timer();
-			scheduler = searching ? new SearchScheduler(log) : new Scheduler(log);
+			scheduler = searching ? new SearchScheduler(messageQueue) : new Scheduler(messageQueue);
 		}
 
 		if (!initSerialPortComm()) {
@@ -262,7 +204,6 @@ public class Main {
 		timer.schedule(scheduler, 100, 100);
 	}
 
-	// stop scheduler
 	public static void stopScheduler() {
 		if (timer != null) {
 			timer.cancel();
@@ -286,7 +227,6 @@ public class Main {
 		}
 	}
 
-	// start server (and join if needed)
 	public static void startServer(boolean join) {
 		if (messageQueue == null) {
 			// initialize messageQueue
@@ -312,7 +252,7 @@ public class Main {
 		if (join) {
 			try {
 				// join server thread
-				server.join(0);
+				server.join();
 			} catch (InterruptedException e) {
 				log("ServerThread interrupted", Log.INFO);
 			}
@@ -328,7 +268,6 @@ public class Main {
 
 	}
 
-	// stop server
 	public static void stopServer(boolean error) {
 		log("Server is going to shutdown.", Log.INFO);
 
@@ -362,9 +301,7 @@ public class Main {
 		}
 	}
 
-	// call on server error
 	public static void serverError(String message) {
-
 		// set running to false
 		running = false;
 
@@ -379,24 +316,20 @@ public class Main {
 			mainWindow.resetButtons();
 
 		}
-
 	}
 
-	// draw slots
 	public static void drawSlots() {
 		if (mainWindow != null) {
 			mainWindow.drawSlots();
 		}
 	}
 
-	// stop searching
 	public static void stopSearching() {
 		if (mainWindow != null) {
 			mainWindow.runSearch(false);
 		}
 	}
 
-	// get step width (for search)
 	public static float getStepWidth() {
 		float stepWidth = searchStepWidth;
 
@@ -415,7 +348,6 @@ public class Main {
 		return stepWidth;
 	}
 
-	// get search skyper address
 	public static String getSkyperAddress() {
 		String s = "";
 
@@ -436,7 +368,6 @@ public class Main {
 		return s;
 	}
 
-	// close serial port
 	public static void closeSerialPort() {
 		if (serialPortComm != null) {
 			serialPortComm.close();
@@ -444,14 +375,12 @@ public class Main {
 		}
 	}
 
-	// close log
 	public static void closeLog() {
 		if (log != null) {
 			log.close();
 		}
 	}
 
-	// main
 	public static void main(String[] args) {
 		// to prevent rxtx to write to console
 		PrintStream out = System.out;

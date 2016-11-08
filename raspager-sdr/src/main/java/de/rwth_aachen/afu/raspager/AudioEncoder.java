@@ -1,6 +1,6 @@
 package de.rwth_aachen.afu.raspager;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -64,7 +64,7 @@ public class AudioEncoder {
 		play(getByteData(inputData));
 	}
 
-	public static void play(ArrayList<Integer> inputData) {
+	public static void play(List<Integer> inputData) {
 		play(getByteData(inputData));
 	}
 
@@ -195,7 +195,7 @@ public class AudioEncoder {
 		return byteData;
 	}
 
-	public static byte[] getByteData(ArrayList<Integer> data) {
+	public static byte[] getByteData(List<Integer> data) {
 		byte[] byteData = new byte[data.size() * 4];
 
 		for (int i = 0; i < data.size(); i++) {

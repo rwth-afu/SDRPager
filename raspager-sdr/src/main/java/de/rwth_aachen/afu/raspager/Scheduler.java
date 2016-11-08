@@ -1,46 +1,31 @@
 package de.rwth_aachen.afu.raspager;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
-public class Scheduler extends TimerTask {
+class Scheduler extends TimerTask {
+	private static final Logger log = Logger.getLogger(Scheduler.class.getName());
+
+	protected final Deque<Message> messageQueue;
 	protected int time = 0x0000;
 	protected int delay = 0;
-
 	// if active is true, time is increased each run
 	protected boolean active = true;
-
 	// max time value
 	protected final int max = (int) (Math.pow(2, 16));
 	// protected final int [] maxBatch = {0, 7, 15, 23, 32, 40, 48, 56, 65, 65,
 	// 65, 65, 65, 65, 65, 65, 65};
-
 	// send time (countdown)
 	protected double sendTime = 0.0;
 	// delay time (for serial) (countdown)
 	protected int serialDelay = 0;
+	protected List<Integer> data;
 
-	// data list (codewords)
-	protected ArrayList<Integer> data;
-
-	protected Log log = null;
-
-	// write message into log file (log level normal)
-	protected void log(String message, int type) {
-		log(message, type, Log.DEBUG_SENDING);
-	}
-
-	// write message with given log level into log file
-	protected void log(String message, int type, int logLevel) {
-		if (this.log != null) {
-			this.log.println(message, type, logLevel);
-		}
-	}
-
-	// constructor
-	public Scheduler(Log log) {
-		this.log = log;
+	public Scheduler(Deque<Message> messageQueue) {
+		this.messageQueue = messageQueue;
 	}
 
 	// "main"
@@ -87,8 +72,8 @@ public class Scheduler extends TimerTask {
 		// if send time is lower than or equals 0 and there is at least 1 slot
 		// and current slot is not the same as last slot
 		// and the message queue is not empty
-		if (this.sendTime <= 0 && slotCount > 0 && !isLastSlot && !Main.messageQueue.isEmpty()) {
-			log("Scheduler: checkSlot# Erlaubter Slot (" + slot + ") - Anzahl " + slotCount, Log.INFO);
+		if (this.sendTime <= 0 && slotCount > 0 && !isLastSlot && !messageQueue.isEmpty()) {
+			log.fine(String.format("checkSlot# Erlaubter Slot ({0}) - Anzahl {1}", slot, slotCount));
 
 			// set serial delay
 			this.serialDelay = Main.config.getDelay();
@@ -130,9 +115,8 @@ public class Scheduler extends TimerTask {
 		}
 
 		// get messages as long as message queue is not empty
-		while (!Main.messageQueue.isEmpty()) {
-			// get message
-			Message message = Main.messageQueue.pop();
+		while (!messageQueue.isEmpty()) {
+			Message message = messageQueue.pop();
 
 			// get codewords and frame position
 			List<Integer> cwBuf = message.getCodeWords();
@@ -150,7 +134,7 @@ public class Scheduler extends TimerTask {
 			// if count of batches + this message is greater than max batches
 			if (((data.size() - 18) / 17 + (cwCount + 2 * framePos) / 16 + 1) > maxBatch) {
 				// push message back in queue (first position)
-				Main.messageQueue.addFirst(message);
+				messageQueue.addFirst(message);
 				break;
 			}
 
@@ -178,7 +162,7 @@ public class Scheduler extends TimerTask {
 		}
 
 		// infos about max batches
-		log("Scheduler: # used batches (" + ((data.size() - 18) / 17) + " / " + maxBatch + ")", Log.INFO);
+		log.fine(String.format("Batches used: {0}/{1}", ((data.size() - 18) / 17), maxBatch));
 
 		// set send time
 		// data.size() * 32 = bits / 1200 = send time

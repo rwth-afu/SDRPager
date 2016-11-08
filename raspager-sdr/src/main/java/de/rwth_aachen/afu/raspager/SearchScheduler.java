@@ -1,17 +1,20 @@
 package de.rwth_aachen.afu.raspager;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class SearchScheduler extends Scheduler {
+class SearchScheduler extends Scheduler {
+	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
 	// for first message (the correction should not be increased at first time)
 	private boolean firstTime = true;
 
-	public SearchScheduler(Log log) {
-		super(log);
+	public SearchScheduler(Deque<Message> messageQueue) {
+		super(messageQueue);
 	}
 
-	// "main"
 	@Override
 	public void run() {
 		// if active
@@ -78,7 +81,7 @@ public class SearchScheduler extends Scheduler {
 		if (!firstTime) {
 			// is correction lower than 1.0?
 			if (AudioEncoder.correction < 1.0f) {
-				log("correction: " + AudioEncoder.correction, Log.INFO, Log.NORMAL);
+				log.log(Level.FINE, "Correction: {0}", AudioEncoder.correction);
 
 				// increase correction or set it to 1.0
 				if (AudioEncoder.correction + Main.getStepWidth() > 1.0f) {
@@ -117,7 +120,7 @@ public class SearchScheduler extends Scheduler {
 		addMessage(new Message("#00 5:1:9C8:0:000000   010112"));
 
 		// send message to skyper address
-		if (!skyperAddress.equals("")) {
+		if (!skyperAddress.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", skyperAddress, "3",
 					String.format("correction=%+4.2f", AudioEncoder.correction) };
 
