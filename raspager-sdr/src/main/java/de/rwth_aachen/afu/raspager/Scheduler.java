@@ -28,7 +28,6 @@ class Scheduler extends TimerTask {
 		this.messageQueue = messageQueue;
 	}
 
-	// "main"
 	@Override
 	public void run() {
 		// if active
@@ -79,7 +78,7 @@ class Scheduler extends TimerTask {
 			this.serialDelay = Main.config.getDelay();
 
 			// get data
-			getData(slotCount);
+			updateData(slotCount);
 
 			// set pin to on
 			if (Main.serialPortComm != null)
@@ -99,7 +98,7 @@ class Scheduler extends TimerTask {
 	}
 
 	// get data depending on slot count
-	public void getData(int slotCount) {
+	public void updateData(int slotCount) {
 		// send batches
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
 		// (1 = sync)) * bits per frame)

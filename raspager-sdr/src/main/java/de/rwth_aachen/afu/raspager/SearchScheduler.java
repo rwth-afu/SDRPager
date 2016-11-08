@@ -55,7 +55,7 @@ class SearchScheduler extends Scheduler {
 		// if slot is not the last slot or it is the first time
 		if ((!isLastSlot || firstTime)) {
 			// get data (slotCount = 0, because it is not needed here)
-			getData(0);
+			updateData(0);
 
 			// set pin (serial port) to on
 			if (Main.serialPortComm != null)
@@ -74,7 +74,7 @@ class SearchScheduler extends Scheduler {
 
 	// get data depending on slot count
 	@Override
-	public void getData(int slotCount) {
+	public void updateData(int slotCount) {
 		this.serialDelay = Main.config.getDelay();
 
 		// if it is not the first time
