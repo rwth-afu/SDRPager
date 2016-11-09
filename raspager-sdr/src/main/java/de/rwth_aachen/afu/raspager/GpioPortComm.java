@@ -8,6 +8,7 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.PinState;
+import com.pi4j.io.gpio.RaspiPin;
 
 public class GpioPortComm {
 	private static final Logger log = Logger.getLogger(GpioPortComm.class.getName());
@@ -17,15 +18,14 @@ public class GpioPortComm {
 
 	private boolean curOn;
 
-	// constructor
-	public GpioPortComm(Pin pin, boolean invert) {
+	public GpioPortComm(String pinName, boolean invert) {
 		this.invert = invert;
+		gpio = GpioFactory.getInstance();
 
-		this.gpio = GpioFactory.getInstance();
-		this.gpioPin = this.gpio.provisionDigitalOutputPin(pin, "FunkrufSlave", PinState.LOW);
-		this.gpioPin.setShutdownOptions(true, PinState.LOW);
-
-		this.curOn = false;
+		Pin pin = RaspiPin.getPinByName(pinName);
+		gpioPin = gpio.provisionDigitalOutputPin(pin, "FunkrufSlave", PinState.LOW);
+		gpioPin.setShutdownOptions(true, PinState.LOW);
+		curOn = true;
 	}
 
 	// set pin on

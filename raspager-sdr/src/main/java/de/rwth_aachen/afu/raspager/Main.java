@@ -16,13 +16,11 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.pi4j.io.gpio.Pin;
-
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
-public class Main {
+public final class Main {
 	private static final Logger log = Logger.getLogger(Main.class.getName());
 	private static final String VERSION = "1.4.0";
 
@@ -36,22 +34,21 @@ public class Main {
 	public static GpioPortComm gpioPortComm;
 
 	public static MainWindow mainWindow = null;
-	public static boolean gui = true;
+	public static boolean showGui = true;
 
 	public static boolean running = false;
-
-	public static Config config = null;
 
 	public static final float DEFAULT_SEARCH_STEP_WIDTH = 0.05f;
 	public static float searchStepWidth = DEFAULT_SEARCH_STEP_WIDTH;
 
-	private static void parseArguments(String[] args) {
+	private static final Configuration config = new Configuration();
+
+	private static boolean parseArguments(String[] args) {
 		Options opts = new Options();
 		opts.addOption("c", "config", true, "Configuration file to use.");
 		opts.addOption("h", "help", false, "Show this help.");
 		opts.addOption("v", "version", false, "Show version infomration.");
 		opts.addOption("s", "service", false, "Run as a service without a GUI.");
-		// TODO Remove legacy stuff once config is using settings.cl
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine line = null;
@@ -59,53 +56,47 @@ public class Main {
 			line = parser.parse(opts, args);
 		} catch (ParseException ex) {
 			ex.printStackTrace();
-			return;
+			return false;
 		}
 
 		// Show help
 		if (line.hasOption('h')) {
 			HelpFormatter fmt = new HelpFormatter();
 			fmt.printHelp("raspager-sdr", opts);
-			return;
+			return false;
 		}
 
 		// Show version
 		if (line.hasOption('v')) {
 			// TODO impl
-			return;
+			return false;
 		}
 
-		// TODO
 		// Start as a service
-		// boolean gui = true;
-		// if (line.hasOption('s')) {
-		// gui = false;
-		// }
-
-		// Config file
-		try {
-			String filename = line.getOptionValue('c', "raspager.properties");
-			config = new Config(filename);
-		} catch (InvalidConfigFileException ex) {
-			ex.printStackTrace();
-			return;
+		if (line.hasOption('s')) {
+			showGui = false;
 		}
-	}
 
-	private static void initialize() {
-		// initialize timeSlots
-		timeSlots = new TimeSlots();
+		try {
+			String fileName = line.getOptionValue('c', "raspager.properties");
+			config.load(fileName);
+		} catch (Throwable ex) {
+			ex.printStackTrace();
+			return false;
+		}
+
+		return true;
 	}
 
 	private static boolean initSerialPortComm() {
-		if (!Main.config.useSerial())
+		if (!config.getBoolean("useSerial", false))
 			return true;
 
 		if (serialPortComm == null) {
 			try {
 				// initialize serial port
-				serialPortComm = new SerialPortComm(Main.config.getSerialPort(), Main.config.getSerialPin(),
-						Main.config.getInvert());
+				serialPortComm = new SerialPortComm(config.getString("serialPort"), config.getInt("serialPin"),
+						config.getBoolean("invert"));
 			} catch (NoSuchPortException e) {
 				// no such port exception
 				log.log(Level.SEVERE, "Serial port does not exist.", e);
@@ -143,21 +134,11 @@ public class Main {
 	}
 
 	private static boolean initGpioPortComm() {
-		if (!Main.config.useGpio())
+		if (!config.getBoolean("useGPIO", false))
 			return true;
 
-		if (Main.config.getGpioPin() == null || !(Main.config.getGpioPin() instanceof Pin)) {
-			log.severe("GPIO pin does not exist.");
-
-			if (mainWindow != null) {
-				mainWindow.showError("Server starten", "GPIO-Pin existiert nicht!");
-			}
-
-			return false;
-		}
-
 		if (gpioPortComm == null) {
-			gpioPortComm = new GpioPortComm(Main.config.getGpioPin(), Main.config.getInvert());
+			gpioPortComm = new GpioPortComm(config.getString("gpioPin"), config.getBoolean("invert", false));
 			return true;
 		}
 
@@ -174,7 +155,7 @@ public class Main {
 	public static void startScheduler(boolean searching) {
 		if (timer == null) {
 			timer = new Timer();
-			scheduler = searching ? new SearchScheduler(messageQueue) : new Scheduler(messageQueue);
+			scheduler = searching ? new SearchScheduler(config, messageQueue) : new Scheduler(config, messageQueue);
 		}
 
 		if (!initSerialPortComm()) {
@@ -229,7 +210,7 @@ public class Main {
 
 		if (server == null) {
 			// initialize server thread
-			server = new ThreadWrapper<FunkrufServer>(new FunkrufServer(config.getPort(), messageQueue));
+			server = new ThreadWrapper<FunkrufServer>(new FunkrufServer(config.getInt("port"), messageQueue));
 		}
 
 		// start scheduler (not searching)
@@ -284,7 +265,7 @@ public class Main {
 
 		log.info("Server stopped.");
 
-		if (gui && mainWindow != null) {
+		if (showGui && mainWindow != null) {
 			mainWindow.resetButtons();
 		}
 	}
@@ -383,24 +364,20 @@ public class Main {
 				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at https://github.com/dh3wr/SDRPager/releases\n");
 
 		// parse arguments
-		parseArguments(args);
-
-		// load config, if not loaded
-		if (config == null) {
-			config = new Config();
-			config.loadDefault();
+		if (!parseArguments(args)) {
+			return;
 		}
 
 		// initialize
-		initialize();
+		timeSlots = new TimeSlots();
 
 		// set running to false
 		running = false;
 
 		// if gui
-		if (gui) {
+		if (showGui) {
 			// create mainWindow
-			mainWindow = new MainWindow();
+			mainWindow = new MainWindow(new ConfigWrapper(config));
 		} else {
 			// if no gui, start server and join
 			startServer(true);

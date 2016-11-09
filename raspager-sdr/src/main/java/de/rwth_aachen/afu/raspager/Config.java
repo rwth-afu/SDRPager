@@ -2,7 +2,6 @@ package de.rwth_aachen.afu.raspager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -22,7 +21,6 @@ public class Config {
 	// default
 	private final String DEFAULT_NAME = "[SDRPager v1.2-SCP-#2345678]";
 	private final int DEFAULT_PORT = 1337;
-	private final int DEFAULT_LOGLEVEL = 0;
 
 	// default serial
 	private final int DEFAULT_SERIAL_PIN = SerialPortComm.DTR;
@@ -41,16 +39,7 @@ public class Config {
 	private int delay = 0;
 	private Mixer.Info soundDevice = AudioSystem.getMixerInfo()[0];
 
-	public Config() {
-	}
-
-	public Config(String filename) throws InvalidConfigFileException {
-		if (filename != null && !filename.equals("")) {
-			load(filename);
-		}
-	}
-
-	public void load(String filename) throws InvalidConfigFileException {
+	public void load(String filename) {
 		Scanner sc;
 
 		try {
@@ -59,7 +48,6 @@ public class Config {
 			// check if this is a valid config file
 			if (!sc.hasNextLine() || !sc.nextLine().trim().equals("#[slave config]")) {
 				sc.close();
-				throw new InvalidConfigFileException("Die Datei ist keine gueltige Konfigurationsdatei!");
 			}
 
 			while (sc.hasNextLine()) {
@@ -114,10 +102,13 @@ public class Config {
 					// correction factor for audio
 					if (p.length > 1) {
 						try {
-							AudioEncoder.correction = Float.parseFloat(p[1]);
+							// TODO impl
+							// AudioEncoder.correction = Float.parseFloat(p[1]);
 						} catch (NumberFormatException e) {
 							// default value
-							AudioEncoder.correction = AudioEncoder.DEFAULT_CORRECTION;
+							// TODO impl
+							// AudioEncoder.correction =
+							// AudioEncoder.DEFAULT_CORRECTION;
 
 							// log("Korrekturfaktor ist auf keinen gueltigen
 							// Wert gesetzt!", Log.ERROR);
@@ -232,28 +223,6 @@ public class Config {
 		}
 
 		// log(this.toString(), Log.INFO);
-	}
-
-	public void save(String filename) throws FileNotFoundException {
-		PrintWriter writer = new PrintWriter(new File(filename));
-
-		String[] lines = { "#[slave config]", "# Port", "port=" + this.port,
-				"# Erlaubte Master getrennt durch Leerzeichen", "master=" + masterToString(), "# Korrekturfaktor",
-				"correction=" + AudioEncoder.correction, "# Serial: Port, Pin",
-				"serial=" + (!this.serialPort.equals("") ? this.serialPort : "-") + " "
-						+ SerialPortComm.getSerialPin(this.serialPin),
-				"# GPIO-Pin: RasPi-Typ / GPIO-Pin",
-				"gpio=" + (this.raspi != null ? this.raspi.toString() : "-") + " / "
-						+ (this.gpioPin != null ? this.gpioPin.getName() : "-"),
-				"# Weitere Konfiguration von Serial und GPIO", "use=" + (this.useSerial ? "serial" : "gpio"),
-				"invert=" + (this.invert ? "1" : "0"), "delay=" + this.delay, "# Sound Device",
-				"sounddevice=" + this.soundDevice.getName() };
-
-		for (int i = 0; i < lines.length; i++) {
-			writer.println(lines[i]);
-		}
-
-		writer.close();
 	}
 
 	public void loadDefault() {
@@ -428,24 +397,4 @@ public class Config {
 		return tmp;
 	}
 
-	@Override
-	public String toString() {
-		String s = "";
-
-		s += "Konfiguration\n\n";
-
-		s += "port=" + this.port + "\n";
-		s += "master=" + masterToString() + "\n";
-		s += "correction=" + AudioEncoder.correction + "\n";
-		s += "serial=" + (!this.serialPort.equals("") ? this.serialPort : "-") + " "
-				+ SerialPortComm.getSerialPin(this.serialPin) + "\n";
-		s += "gpio=" + (this.raspi != null ? this.raspi.toString() : "-") + " / "
-				+ (this.gpioPin != null ? this.gpioPin.getName() : "-") + "\n";
-		s += "use=" + (this.useSerial ? "serial" : "gpio") + "\n";
-		s += "invert=" + (this.invert ? "1" : "0") + "\n";
-		s += "delay=" + this.delay + "\n";
-		s += "sounddevice=" + this.soundDevice.getName() + "\n";
-
-		return s;
-	}
 }

@@ -1,28 +1,49 @@
 package de.rwth_aachen.afu.raspager;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineListener;
+import javax.sound.sampled.Mixer;
 
-public class AudioEncoder {
+final class AudioEncoder {
+	private static final Logger log = Logger.getLogger(AudioEncoder.class.getName());
 	// 0-2 = begin, 4-36 = constant, 38-39 = end
-
-	private static AudioFormat af48000 = new AudioFormat(48000, 16, 1, true, false);
+	private static final AudioFormat af48000 = new AudioFormat(48000, 16, 1, true, false);
 	private static final float[] bitChange = { -0.9f, -0.7f, 0.0f, 0.7f, 0.9f };
-	public static float DEFAULT_CORRECTION = 0f;
-	public static float correction = DEFAULT_CORRECTION; // for correction
-	// public static float correction = -1;
+	private Mixer.Info device = null;
+	private float correction = 0.0f;
 
-	public static void play(byte[] inputData) {
-		byte[] soundData = encode(inputData);
+	public AudioEncoder(String soundDevice) {
+		Mixer.Info[] soundDevices = AudioSystem.getMixerInfo();
+		for (Mixer.Info device : soundDevices) {
+			if (device.getName().equalsIgnoreCase(soundDevice)) {
+				this.device = device;
+				break;
+			}
+		}
 
-		try {
-			Clip c = AudioSystem.getClip(Main.config.getSoundDevice());
+		if (device == null) {
+			throw new IllegalArgumentException("Sound device does not exist.");
+		}
+	}
 
+	public float getCorrection() {
+		return correction;
+	}
+
+	public void setCorrection(float correction) {
+		this.correction = correction;
+	}
+
+	public void play(byte[] inputData) {
+		byte[] soundData = encode(inputData, correction);
+
+		try (Clip c = AudioSystem.getClip(device)) {
 			/*
 			 * // === DOWNSAMPLING AUF 44100 Hz ===
 			 * 
@@ -38,37 +59,31 @@ public class AudioEncoder {
 			 * c.open(inputStream);
 			 */
 
-			c.open(af48000, soundData, 0, soundData.length); // auskommentieren,
-																// falls
-																// Downsampling
-																// verwendet
-																// werden soll
-			c.addLineListener(new LineListener() {
-				@Override
-				public void update(LineEvent e) {
-					if (e.getType() == LineEvent.Type.STOP) {
-						c.close();
-						e.getLine().close();
-					}
+			// auskommentieren, falls Downsampling verwendet werden soll
+			c.open(af48000, soundData, 0, soundData.length);
+			c.addLineListener((e) -> {
+				if (e.getType() == LineEvent.Type.STOP) {
+					c.close();
+					e.getLine().close();
 				}
 			});
 
 			c.start();
 			c.loop(0);
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			log.log(Level.SEVERE, "Failed to play audio stream.", ex);
 		}
 	}
 
-	public static void play(int[] inputData) {
+	public void play(int[] inputData) {
 		play(getByteData(inputData));
 	}
 
-	public static void play(List<Integer> inputData) {
+	public void play(List<Integer> inputData) {
 		play(getByteData(inputData));
 	}
 
-	public static byte[] encode(byte[] inputData) {
+	private static byte[] encode(byte[] inputData, float correction) {
 		byte sample_size = (byte) (af48000.getSampleSizeInBits() / 8);
 		// 100 extra bytes to get the end data to be sent
 		byte[] data = new byte[40 * sample_size * inputData.length * 8 + 100];
@@ -183,7 +198,7 @@ public class AudioEncoder {
 		return data;
 	}
 
-	public static byte[] getByteData(int[] data) {
+	private static byte[] getByteData(int[] data) {
 		byte[] byteData = new byte[data.length * 4];
 
 		for (int i = 0; i < data.length; i++) {
@@ -195,7 +210,7 @@ public class AudioEncoder {
 		return byteData;
 	}
 
-	public static byte[] getByteData(List<Integer> data) {
+	private static byte[] getByteData(List<Integer> data) {
 		byte[] byteData = new byte[data.size() * 4];
 
 		for (int i = 0; i < data.size(); i++) {

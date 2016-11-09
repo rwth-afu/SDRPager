@@ -8,11 +8,14 @@ import java.util.logging.Logger;
 
 class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
+	private final float cfgStepSize;
 	// for first message (the correction should not be increased at first time)
 	private boolean firstTime = true;
 
-	public SearchScheduler(Deque<Message> messageQueue) {
-		super(messageQueue);
+	public SearchScheduler(Configuration config, Deque<Message> messageQueue) {
+		super(config, messageQueue);
+
+		cfgStepSize = config.getFloat("stepSize");
 	}
 
 	@Override
@@ -67,7 +70,7 @@ class SearchScheduler extends Scheduler {
 		// if serial delay is lower than or equals 0 and there is data
 		if (this.serialDelay <= 0 && data != null) {
 			// play data and set data to null
-			AudioEncoder.play(data);
+			encoder.play(data);
 			data = null;
 		}
 	}
@@ -75,19 +78,19 @@ class SearchScheduler extends Scheduler {
 	// get data depending on slot count
 	@Override
 	public void updateData(int slotCount) {
-		this.serialDelay = Main.config.getDelay();
+		this.serialDelay = cfgDelay;
 
 		// if it is not the first time
 		if (!firstTime) {
 			// is correction lower than 1.0?
-			if (AudioEncoder.correction < 1.0f) {
-				log.log(Level.FINE, "Correction: {0}", AudioEncoder.correction);
+			if (encoder.getCorrection() < 1.0f) {
+				log.log(Level.FINE, "Correction: {0}", encoder.getCorrection());
 
 				// increase correction or set it to 1.0
-				if (AudioEncoder.correction + Main.getStepSize() > 1.0f) {
-					AudioEncoder.correction = 1.0f;
+				if (encoder.getCorrection() + cfgStepSize > 1.0f) {
+					encoder.setCorrection(1.0f);
 				} else {
-					AudioEncoder.correction += Main.getStepSize();
+					encoder.setCorrection(encoder.getCorrection() + cfgStepSize);
 				}
 
 				// if there is the main window
@@ -109,7 +112,7 @@ class SearchScheduler extends Scheduler {
 
 		// add praeambel
 		for (int i = 0; i < 18; i++) {
-			data.add(Pocsag.PRAEEMBEL);
+			data.add(Pocsag.PRAEAMBLE);
 		}
 
 		// create time message
@@ -122,7 +125,7 @@ class SearchScheduler extends Scheduler {
 		// send message to skyper address
 		if (!skyperAddress.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", skyperAddress, "3",
-					String.format("correction=%+4.2f", AudioEncoder.correction) };
+					String.format("correction=%+4.2f", encoder.getCorrection()) };
 
 			// StringBuilder sb = new StringBuilder();
 			// sb.append("#00 6:1:");

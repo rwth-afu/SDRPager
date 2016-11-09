@@ -24,8 +24,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -74,8 +74,8 @@ public class MainWindow extends JFrame {
 	private Canvas slotDisplay;
 	private JPanel panel_serial;
 	private JPanel panel_gpio;
-	private JComboBox serialPortList;
-	private JComboBox serialPin;
+	private JComboBox<String> serialPortList;
+	private JComboBox<String> serialPin;
 	private JCheckBox invert;
 	private JTextField delay;
 	private JComboBox raspiList;
@@ -89,8 +89,12 @@ public class MainWindow extends JFrame {
 	private JButton searchStop;
 	private JTextField searchAddress;
 
+	private final ConfigWrapper config;
+
 	// constructor
-	public MainWindow() {
+	public MainWindow(ConfigWrapper config) {
+		this.config = config;
+
 		// set window preferences
 		setTitle("FunkrufSlave");
 		setResizable(false);
@@ -198,7 +202,7 @@ public class MainWindow extends JFrame {
 			public void stateChanged(ChangeEvent e) {
 				// set correction
 				correctionActual.setText(String.format("%+5.2f", correctionSlider.getValue() / 100.));
-				AudioEncoder.correction = correctionSlider.getValue() / 100f;
+				Main.scheduler.setCorrection(correctionSlider.getValue() / 100.0f);
 			}
 		});
 		main.add(correctionSlider);
@@ -563,9 +567,8 @@ public class MainWindow extends JFrame {
 
 					try {
 						// try to load config
-						Main.config.load(file.getPath());
-
-					} catch (InvalidConfigFileException e) {
+						config.getConfiguration().load(file.getPath());
+					} catch (Exception e) {
 						// catch errors
 						showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
 						log.log(Level.SEVERE, "Invalid configuration file.", e);
@@ -590,7 +593,6 @@ public class MainWindow extends JFrame {
 		// config save button
 		JButton saveButton = new JButton("Speichern");
 		saveButton.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				// show save dialog
@@ -601,16 +603,11 @@ public class MainWindow extends JFrame {
 					File file = fileChooser.getSelectedFile();
 
 					try {
-						// try to save config
 						setConfig();
-
-						Main.config.save(file.getPath());
-
-					} catch (FileNotFoundException e) {
-						// catch errors
+						config.getConfiguration().save(file.getPath());
+					} catch (Exception ex) {
+						log.log(Level.SEVERE, "Failed to save configuration file.", ex);
 						showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
-
-						log.log(Level.SEVERE, "Failed to save configuration file.", e);
 
 						return;
 					}
@@ -662,12 +659,12 @@ public class MainWindow extends JFrame {
 		panel_serial.setLayout(null);
 
 		// serial port
-		serialPortList = new JComboBox();
+		serialPortList = new JComboBox<>();
 		serialPortList.setBounds(12, 20, 151, 18);
 		panel_serial.add(serialPortList);
 
 		// serial pin
-		serialPin = new JComboBox();
+		serialPin = new JComboBox<>();
 		serialPin.setBounds(12, 42, 151, 18);
 		panel_serial.add(serialPin);
 		serialPin.addItem("DTR"); // index 0 = SerialPortComm.DTR
@@ -910,48 +907,36 @@ public class MainWindow extends JFrame {
 	}
 
 	public void setConfig() {
-		// set port
-		Main.config.setPort(Integer.parseInt(port.getText()));
+		config.setPort(Integer.parseInt(port.getText()));
+		config.setMasters(masterList.getItems());
 
-		// set master
-		String master = "";
-		for (int i = 0; i < masterList.getItemCount(); i++) {
-			master += (i > 0 ? " " : "") + masterList.getItem(i);
-		}
-		Main.config.setMaster(master);
-
-		// set serial
+		// serial port config
 		if (!radioUseSerial.isSelected()) {
-			Main.config.setSerial("", 0);
+			config.setUseSerial(false);
 		} else {
-			Main.config.setSerial((String) serialPortList.getSelectedItem(), serialPin.getSelectedIndex());
+			config.setUseSerial(true);
+			config.setSerialPort(serialPortList.getSelectedItem().toString());
+			config.setSerialPin(serialPin.getSelectedItem().toString());
 		}
 
 		// set RasPi
-		if (!(raspiList.getSelectedItem() instanceof BoardType) || !radioUseGpio.isSelected()) {
-			Main.config.setRaspi(null);
+		if (!radioUseGpio.isSelected()) {
+			config.setRaspiRev(null);
+			config.setUseGpio(false);
+			config.setGpioPin(null);
 		} else {
-			Main.config.setRaspi((BoardType) raspiList.getSelectedItem());
+			config.setUseGpio(true);
+			config.setGpioPin(gpioList.getSelectedItem().toString());
+			config.setRaspiRev(raspiList.getSelectedItem().toString());
 		}
 
-		// set GPIO
-		if (!(gpioList.getSelectedItem() instanceof Pin) || !radioUseGpio.isSelected()) {
-			Main.config.setGpio(null);
-		} else {
-			Main.config.setGpio((Pin) gpioList.getSelectedItem());
-		}
-
-		// set use serial / gpio
-		Main.config.setUseSerial(this.useSerial());
-
-		// set invert
-		Main.config.setInvert(this.invert.isSelected());
-
-		// set delay
-		Main.config.setDelay(Integer.parseInt(this.delay.getText()));
+		config.setInvert(invert.isSelected());
+		config.setDelay(Integer.parseInt(delay.getText()));
+		config.setSoundDevice(soundDeviceList.getSelectedItem().toString());
 
 		// set sound device
-		Main.config.setSoundDevice((Mixer.Info) this.soundDeviceList.getSelectedItem());
+		// Main.config.setSoundDevice((Mixer.Info)
+		// this.soundDeviceList.getSelectedItem());
 
 		if (Main.running) {
 			if (showConfirm("Config uebernehmen",
@@ -965,31 +950,27 @@ public class MainWindow extends JFrame {
 	}
 
 	public void loadConfig() {
-		// load port
-		port.setText("" + Main.config.getPort());
+		port.setText(Integer.toString(config.getPort()));
 
-		// load master
+		// load masters
 		masterList.removeAll();
-
-		String[] master = Main.config.getMaster();
-		if (master != null) {
-			for (int i = 0; i < master.length; i++) {
-				masterList.add(master[i]);
-			}
+		String[] masters = config.getMasters();
+		if (masters != null) {
+			Arrays.stream(config.getMasters()).forEach((m) -> masterList.add(m));
 		}
 
 		// load serial
-		serialPortList.setSelectedItem(Main.config.getSerialPort());
-		serialPin.setSelectedIndex(Main.config.getSerialPin());
-		delay.setText(Main.config.getDelay() + "");
+		serialPortList.setSelectedItem(config.getSerialPort());
+		serialPin.setSelectedItem(config.getSerialPin());
+		delay.setText(Integer.toString(config.getDelay()));
 
 		// load raspi / gpio
 		gpioList.removeAllItems();
 		gpioList.addItem("Deaktiviert");
 
-		invert.setSelected(Main.config.getInvert());
+		invert.setSelected(config.getInvert());
 
-		if (Main.config.useSerial()) {
+		if (config.useSerial()) {
 			radioUseSerial.setSelected(true);
 			radioUseSerial.setEnabled(false);
 			radioUseGpio.setEnabled(true);
@@ -1017,15 +998,16 @@ public class MainWindow extends JFrame {
 			serialPin.setEnabled(false);
 		}
 
-		if (Main.config.getRaspi() instanceof BoardType) {
-			raspiList.setSelectedItem(Main.config.getRaspi());
-			for (Pin p : RaspiPin.allPins(Main.config.getRaspi())) {
-				gpioList.addItem(p);
-			}
-			gpioList.setSelectedItem(Main.config.getGpioPin());
+		if (config.getRaspiRev() != null) {
+			raspiList.setSelectedItem(config.getRaspiRev());
+			// TODO impl
+			// for (Pin p : RaspiPin.allPins(Main.config.getRaspi())) {
+			// gpioList.addItem(p);
+			// }
+			gpioList.setSelectedItem(config.getGpioPin());
 		}
 
-		soundDeviceList.setSelectedItem(Main.config.getSoundDevice());
+		soundDeviceList.setSelectedItem(config.getSoundDevice());
 
 		updateCorrection();
 	}
@@ -1076,7 +1058,7 @@ public class MainWindow extends JFrame {
 	}
 
 	public void updateCorrection() {
-		correctionActual.setText(String.format("%+4.2f", AudioEncoder.correction));
-		correctionSlider.setValue((int) (AudioEncoder.correction * 100));
+		correctionActual.setText(String.format("%+4.2f", Main.scheduler.getCorrection()));
+		correctionSlider.setValue((int) (Main.scheduler.getCorrection() * 100));
 	}
 }

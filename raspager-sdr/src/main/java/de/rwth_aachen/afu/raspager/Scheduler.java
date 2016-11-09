@@ -24,8 +24,14 @@ class Scheduler extends TimerTask {
 	protected int serialDelay = 0;
 	protected List<Integer> data;
 
-	public Scheduler(Deque<Message> messageQueue) {
+	protected final AudioEncoder encoder;
+	protected final int cfgDelay;
+
+	public Scheduler(Configuration config, Deque<Message> messageQueue) {
 		this.messageQueue = messageQueue;
+
+		cfgDelay = config.getInt("delay", 0);
+		encoder = new AudioEncoder(config.getString("soundDevice"));
 	}
 
 	@Override
@@ -34,16 +40,16 @@ class Scheduler extends TimerTask {
 		if (active) {
 			// increase time
 			// this.time = ++this.time % this.max;
-			this.time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
+			time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
 
 			// if serial delay is lower than or equals 0
-			if (this.serialDelay <= 0) {
+			if (serialDelay <= 0) {
 				// decrease send time
-				this.sendTime -= 0.1;
+				sendTime -= 0.1;
 			}
 
 			// decrease serial delay
-			this.serialDelay -= 100;
+			serialDelay -= 100;
 		}
 
 		// check slot
@@ -60,7 +66,7 @@ class Scheduler extends TimerTask {
 		}
 
 		// if send time is lower than or equals 0
-		if (this.sendTime <= 0) {
+		if (sendTime <= 0) {
 			// set pin to off
 			if (Main.serialPortComm != null)
 				Main.serialPortComm.setOff();
@@ -71,11 +77,11 @@ class Scheduler extends TimerTask {
 		// if send time is lower than or equals 0 and there is at least 1 slot
 		// and current slot is not the same as last slot
 		// and the message queue is not empty
-		if (this.sendTime <= 0 && slotCount > 0 && !isLastSlot && !messageQueue.isEmpty()) {
-			log.fine(String.format("checkSlot# Erlaubter Slot ({0}) - Anzahl {1}", slot, slotCount));
+		if (sendTime <= 0 && slotCount > 0 && !isLastSlot && !messageQueue.isEmpty()) {
+			log.fine(String.format("Slot {0}/{1}", slot, slotCount));
 
 			// set serial delay
-			this.serialDelay = Main.config.getDelay();
+			serialDelay = cfgDelay;
 
 			// get data
 			updateData(slotCount);
@@ -88,13 +94,12 @@ class Scheduler extends TimerTask {
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
-		if (this.serialDelay <= 0 && data != null) {
+		if (serialDelay <= 0 && data != null) {
 
 			// play data and set data to null
-			AudioEncoder.play(data);
+			encoder.play(data);
 			data = null;
 		}
-
 	}
 
 	// get data depending on slot count
@@ -103,14 +108,14 @@ class Scheduler extends TimerTask {
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
 		// (1 = sync)) * bits per frame)
 		// (3,75 - 0,48) * 1200 / ((16 + 1) * 32)
-		int maxBatch = (int) ((6.40 * slotCount - 0.48 - Main.config.getDelay() / 1000) * 1200 / 544);
+		int maxBatch = (int) ((6.40 * slotCount - 0.48 - cfgDelay / 1000) * 1200 / 544);
 
 		// create data
 		data = new ArrayList<Integer>();
 
 		// add praeembel
 		for (int i = 0; i < 18; i++) {
-			data.add(Pocsag.PRAEEMBEL);
+			data.add(Pocsag.PRAEAMBLE);
 		}
 
 		// get messages as long as message queue is not empty
@@ -191,6 +196,13 @@ class Scheduler extends TimerTask {
 	// correct time by delay
 	public void correctTime(int delay) {
 		this.delay += delay;
+	}
 
+	public float getCorrection() {
+		return encoder.getCorrection();
+	}
+
+	public void setCorrection(float correction) {
+		encoder.setCorrection(correction);
 	}
 }
