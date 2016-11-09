@@ -34,13 +34,10 @@ public class AudioEncoder {
 			 */
 
 			c.open(af48000, soundData, 0, soundData.length); // auskommentieren, falls Downsampling verwendet werden soll
-			c.addLineListener(new LineListener() {
-				@Override
-				public void update(LineEvent e) {
-					if (e.getType() == LineEvent.Type.STOP) {
-						c.close();
-						e.getLine().close();
-					}
+			c.addLineListener(e -> {
+				if (e.getType() == LineEvent.Type.STOP) {
+					c.close();
+					e.getLine().close();
 				}
 			});
 
@@ -49,10 +46,6 @@ public class AudioEncoder {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	public static void play(int[] inputData) {
-		play(getByteData(inputData));
 	}
 
 	public static void play(ArrayList<Integer> inputData) {
@@ -172,18 +165,6 @@ public class AudioEncoder {
 		}
 
 		return data;
-	}
-
-	public static byte[] getByteData(int[] data) {
-		byte[] byteData = new byte[data.length * 4];
-
-		for (int i = 0; i < data.length; i++) {
-			for (int c = 0; c < 4; c++) {
-				byteData[i * 4 + c] = (byte) (data[i] >>> (8 * (3 - c)));
-			}
-		}
-
-		return byteData;
 	}
 
 	public static byte[] getByteData(ArrayList<Integer> data) {
