@@ -357,6 +357,7 @@ public class Main {
 		} else {
 			// if there is a gui, the start button has to be reseted
 			if (mainWindow != null) {
+                mainWindow.drawSlots();
 				mainWindow.resetButtons();
 			}
 		}
