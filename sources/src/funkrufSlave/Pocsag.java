@@ -26,8 +26,7 @@ public class Pocsag {
 	public static final int POC_BITS_PER_DIGIT = 4;
 
 	// special code words
-	public static final int PRAEEMBEL = 0xaaaaaaaa; // send 18 times // 0xaa =
-	// 0b10101010 4
+	public static final int PRAEEMBEL = 0xaaaaaaaa; // send 18 times // 0xaa = 0b10101010 4
 	public static final int SYNC = 0x7CD215D8; // sync-codeword
 	public static final int IDLE = 0x7A89C197; // idle-codeword
 
