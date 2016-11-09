@@ -1,18 +1,13 @@
 package funkrufSlave;
 
+import javax.sound.sampled.*;
 import java.util.ArrayList;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineListener;
 
 public class AudioEncoder {
 	// 0-2 = begin, 4-36 = constant, 38-39 = end
 
 	private static AudioFormat af48000 = new AudioFormat(48000, 16, 1, true, false);
-	private static final float[] bitChange = { -0.9f, -0.7f, 0.0f, 0.7f, 0.9f };
+	private static final float[] bitChange = {-0.9f, -0.7f, 0.0f, 0.7f, 0.9f};
 	public static float DEFAULT_CORRECTION = 0f;
 	public static float correction = DEFAULT_CORRECTION; // for correction
 	// public static float correction = -1;
@@ -38,11 +33,7 @@ public class AudioEncoder {
 			 * c.open(inputStream);
 			 */
 
-			c.open(af48000, soundData, 0, soundData.length); // auskommentieren,
-																// falls
-																// Downsampling
-																// verwendet
-																// werden soll
+			c.open(af48000, soundData, 0, soundData.length); // auskommentieren, falls Downsampling verwendet werden soll
 			c.addLineListener(new LineListener() {
 				@Override
 				public void update(LineEvent e) {
@@ -175,7 +166,7 @@ public class AudioEncoder {
 				}
 
 				comp /= 2; // shift bit selection mask 1 bit right to select the
-							// next bit in the following loop
+				// next bit in the following loop
 
 			}
 		}

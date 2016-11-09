@@ -1,55 +1,20 @@
 package funkrufSlave;
 
-import java.awt.AWTException;
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.List;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.Rectangle;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Mixer;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Mixer;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.JRadioButton;
-import java.awt.BorderLayout;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;

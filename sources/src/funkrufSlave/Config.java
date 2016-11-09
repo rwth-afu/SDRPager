@@ -1,5 +1,11 @@
 package funkrufSlave;
 
+import com.pi4j.io.gpio.Pin;
+import com.pi4j.io.gpio.RaspiPin;
+import com.pi4j.system.SystemInfo.BoardType;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Mixer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -7,13 +13,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Scanner;
-
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Mixer;
-
-import com.pi4j.io.gpio.Pin;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.system.SystemInfo.BoardType;
 
 public class Config {
 
@@ -267,7 +266,7 @@ public class Config {
 	public void save(String filename) throws FileNotFoundException {
 		PrintWriter writer = new PrintWriter(new File(filename));
 
-		String[] lines = { "#[slave config]", "# Port", "port=" + this.port,
+		String[] lines = {"#[slave config]", "# Port", "port=" + this.port,
 				"# Erlaubte Master getrennt durch Leerzeichen", "master=" + masterToString(), "# Korrekturfaktor",
 				"correction=" + AudioEncoder.correction, "# Serial: Port, Pin",
 				"serial=" + (!this.serialPort.equals("") ? this.serialPort : "-") + " "
@@ -277,7 +276,7 @@ public class Config {
 						+ (this.gpioPin != null ? this.gpioPin.getName() : "-"),
 				"# Weitere Konfiguration von Serial und GPIO", "use=" + (this.useSerial ? "serial" : "gpio"),
 				"invert=" + (this.invert ? "1" : "0"), "delay=" + this.delay, "# Sound Device",
-				"sounddevice=" + this.soundDevice.getName(), "# LogLevel", "loglevel=" + this.logLevel };
+				"sounddevice=" + this.soundDevice.getName(), "# LogLevel", "loglevel=" + this.logLevel};
 
 		for (int i = 0; i < lines.length; i++) {
 			writer.println(lines[i]);

@@ -19,7 +19,7 @@ public class Log {
 	public static final int MS = 3;
 	public static final int SM = 4;
 
-	private final String[] types = { "I", "E", "C", "MS", "SM" };
+	private final String[] types = {"I", "E", "C", "MS", "SM"};
 
 	private String logFile = null;
 	private int logLevel = 0;

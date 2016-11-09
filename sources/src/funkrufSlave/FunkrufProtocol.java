@@ -33,70 +33,70 @@ public class FunkrufProtocol {
 		log("FunkrufProtocol: handle# type (" + type + ")", Log.MS);
 
 		switch (type) {
-		case '#':
-			// Funkrufe
-			try {
-				int messageID = Integer.parseInt(parts[0].substring(1, 3), 16);
-				this.messageQueue.push(new Message(parts));
+			case '#':
+				// Funkrufe
+				try {
+					int messageID = Integer.parseInt(parts[0].substring(1, 3), 16);
+					this.messageQueue.push(new Message(parts));
 
-				messageID = (messageID + 1) % 256;
+					messageID = (messageID + 1) % 256;
 
-				send(String.format("#%02x +", messageID), pw);
-			} catch (NumberFormatException e) {
-				log("FunkrufProtocol: handle# (#) NumberFormatException", Log.ERROR);
-				errorState = E_ERROR;
+					send(String.format("#%02x +", messageID), pw);
+				} catch (NumberFormatException e) {
+					log("FunkrufProtocol: handle# (#) NumberFormatException", Log.ERROR);
+					errorState = E_ERROR;
 
-			}
-
-			break;
-		case '2':
-			String ident = parts[1];
-			if (Main.scheduler == null)
-				log("Scheduler ist null!", Log.ERROR);
-			int time = Main.scheduler.getTime();
-
-			send(String.format("2:%s:%04x", ident, time), pw);
-			ack(errorState, pw);
-
-			break;
-		case '3':
-			// correct system time
-			try {
-				int delay;
-
-				if (parts[1].charAt(0) == '+') {
-					parts[1] = parts[1].substring(1);
-					delay = Integer.parseInt(parts[1], 16);
-				} else {
-					parts[1] = parts[1].substring(1);
-					delay = -Integer.parseInt(parts[1], 16);
 				}
 
+				break;
+			case '2':
+				String ident = parts[1];
 				if (Main.scheduler == null)
 					log("Scheduler ist null!", Log.ERROR);
-				Main.scheduler.correctTime(delay);
-			} catch (NumberFormatException e) {
-				log("FunkrufProtocol: handle# (3) NumberFormatException", Log.ERROR);
+				int time = Main.scheduler.getTime();
+
+				send(String.format("2:%s:%04x", ident, time), pw);
+				ack(errorState, pw);
+
+				break;
+			case '3':
+				// correct system time
+				try {
+					int delay;
+
+					if (parts[1].charAt(0) == '+') {
+						parts[1] = parts[1].substring(1);
+						delay = Integer.parseInt(parts[1], 16);
+					} else {
+						parts[1] = parts[1].substring(1);
+						delay = -Integer.parseInt(parts[1], 16);
+					}
+
+					if (Main.scheduler == null)
+						log("Scheduler ist null!", Log.ERROR);
+					Main.scheduler.correctTime(delay);
+				} catch (NumberFormatException e) {
+					log("FunkrufProtocol: handle# (3) NumberFormatException", Log.ERROR);
+					errorState = E_ERROR;
+				}
+
+				ack(errorState, pw);
+
+				break;
+			case '4':
+				// set slots
+				timeSlots.setSlots(parts[1]);
+
+				log(timeSlots.getSlots(), Log.COMMUNICATION, Log.DEBUG_CONNECTION);
+
+				ack(errorState, pw);
+
+				break;
+			default:
+				log("FunkrufProtocol: handle# unknown type", Log.ERROR);
 				errorState = E_ERROR;
-			}
 
-			ack(errorState, pw);
-
-			break;
-		case '4':
-			// set slots
-			timeSlots.setSlots(parts[1]);
-
-			log(timeSlots.getSlots(), Log.COMMUNICATION, Log.DEBUG_CONNECTION);
-
-			ack(errorState, pw);
-
-			break;
-		default:
-			log("FunkrufProtocol: handle# unknown type", Log.ERROR);
-			errorState = E_ERROR;
-
-			break;
+				break;
 		}
 	}
 
@@ -104,17 +104,17 @@ public class FunkrufProtocol {
 		String outputBuffer = "";
 
 		switch (errorState) {
-		case FunkrufProtocol.E_SUCCESS:
-			outputBuffer = "+";
-			break;
+			case FunkrufProtocol.E_SUCCESS:
+				outputBuffer = "+";
+				break;
 
-		case FunkrufProtocol.E_ERROR:
-			outputBuffer = "-";
-			break;
+			case FunkrufProtocol.E_ERROR:
+				outputBuffer = "-";
+				break;
 
-		case FunkrufProtocol.E_RETRY:
-			outputBuffer = String.format("%%");
-			break;
+			case FunkrufProtocol.E_RETRY:
+				outputBuffer = String.format("%%");
+				break;
 		}
 
 		if (outputBuffer != null && !outputBuffer.equals("")) {

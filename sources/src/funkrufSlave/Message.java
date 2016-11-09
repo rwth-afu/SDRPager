@@ -10,7 +10,7 @@ public class Message {
 	private String text;
 
 	private ArrayList<Integer> codeWords; // 0 = framePos, 1 = cw, 2 = cw, 3 =
-											// ....
+	// ....
 
 	// constructor
 	public Message(String[] parts) {
@@ -67,19 +67,19 @@ public class Message {
 	// encode message depending on type
 	public boolean encode() {
 		switch (this.type) {
-		case 5:
-			// numeric
-			// #00 5:1:9C8:0:094016 130412
-			this.codeWords = Pocsag.encodeNum(this.address, this.function, this.text);
+			case 5:
+				// numeric
+				// #00 5:1:9C8:0:094016 130412
+				this.codeWords = Pocsag.encodeNum(this.address, this.function, this.text);
 
-			return true;
+				return true;
 
-		case 6:
-			// alpha numeric
+			case 6:
+				// alpha numeric
 
-			this.codeWords = Pocsag.encodeStr(this.address, this.function, this.text);
+				this.codeWords = Pocsag.encodeStr(this.address, this.function, this.text);
 
-			return true;
+				return true;
 		}
 
 		return false;

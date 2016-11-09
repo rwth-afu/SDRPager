@@ -1,10 +1,6 @@
 package funkrufSlave;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.UnsupportedCommOperationException;
+import gnu.io.*;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -81,18 +77,18 @@ public class SerialPortComm {
 
 		// set current pin
 		switch (this.pin) {
-		case DTR:
-			if (serialPort.isDTR() != on) {
-				serialPort.setDTR(on);
-				log("SerialPortComm # Set DTR to " + (on ? "on" : "off"), Log.INFO);
-			}
-			break;
-		case RTS:
-			if (serialPort.isRTS() != on) {
-				serialPort.setRTS(on);
-				log("SerialPortComm # Set RTS to " + (on ? "on" : "off"), Log.INFO);
-			}
-			break;
+			case DTR:
+				if (serialPort.isDTR() != on) {
+					serialPort.setDTR(on);
+					log("SerialPortComm # Set DTR to " + (on ? "on" : "off"), Log.INFO);
+				}
+				break;
+			case RTS:
+				if (serialPort.isRTS() != on) {
+					serialPort.setRTS(on);
+					log("SerialPortComm # Set RTS to " + (on ? "on" : "off"), Log.INFO);
+				}
+				break;
 		}
 	}
 
@@ -127,12 +123,12 @@ public class SerialPortComm {
 	// get name of pin
 	public static String getSerialPin(int pin) {
 		switch (pin) {
-		case 0:
-			return "DTR";
-		case 1:
-			return "RTS";
-		default:
-			return "unbekannt";
+			case 0:
+				return "DTR";
+			case 1:
+				return "RTS";
+			default:
+				return "unbekannt";
 		}
 	}
 }
