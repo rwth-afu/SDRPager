@@ -258,7 +258,8 @@ public class Main {
 			return;
 		}
 
-		timer.schedule(scheduler, 100, 100);
+		// run scheduler now and then every 10ms
+		timer.schedule(scheduler, 0, 10);
 	}
 
 	// stop scheduler
@@ -364,7 +365,6 @@ public class Main {
 
 	// call on server error
 	public static void serverError(String message) {
-
 		// set running to false
 		running = false;
 
@@ -379,7 +379,6 @@ public class Main {
 			mainWindow.resetButtons();
 
 		}
-
 	}
 
 	// draw slots

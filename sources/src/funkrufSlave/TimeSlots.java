@@ -1,6 +1,8 @@
 package funkrufSlave;
 
 public class TimeSlots {
+	// slots are from 0 to F, first is 0.
+
 	// slot configuration
 	private boolean[] slots;
 	// last slot
@@ -71,8 +73,13 @@ public class TimeSlots {
 	public int getCurrentSlotInt(int time) {
 		// time (in 0.1s)
 		// time per slot 3.75s = 37.5 * 0.1s
-		// total 16 slots
-		int slot = ((int) (time / 64.0)) % 16;
+		// total 16 slots, so % 16
+		// *** Very probably a bug ***
+		// int slot = ((int) (time / 64.0)) % 16;
+
+		// One time slot has a length of 60 sec/16 slot = 3.75 s = 37.5 * 0.1 s
+		// % 16 to warp around complete minutes
+		int slot = ((int) (time / 37.5)) % 16;
 
 		return slot;
 	}

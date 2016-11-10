@@ -4,21 +4,23 @@ import java.util.ArrayList;
 import java.util.TimerTask;
 
 public class Scheduler extends TimerTask {
-	//
+	// time corrected by master in 0.1s steps, values should be from 0x0000 to 0xffff
 	protected int time = 0x0000;
+
+	// received offset from master in 0.1s steps
 	protected int delay = 0;
 
 	// if active is true, time is increased each run
 	protected boolean active = true;
 
-	// max time value
+	// max time value, as time is a wrapping counter of 0.1 ms and 16 bit long.
 	protected final int max = (int) (Math.pow(2, 16));
-	// protected final int [] maxBatch = {0, 7, 15, 23, 32, 40, 48, 56, 65, 65,
-	// 65, 65, 65, 65, 65, 65, 65};
 
-	// send time (countdown)
+	// remaining time span to be on air in seconds
 	protected double sendTime = 0.0;
-	// delay time (for serial) (countdown)
+
+	// in general: delay in ms between "PTT On" and start of audio
+	// delay time (for serial / gpio) (countdown)
 	protected int serialDelay = 0;
 
 	// data list (codewords)
@@ -50,16 +52,18 @@ public class Scheduler extends TimerTask {
 		if (active) {
 			// increase time
 			// this.time = ++this.time % this.max;
+			// still get local time in 0.1s, add (or sub) correction (here: delay) from master,
+			// and take lowest 16 bits (this.max)
 			this.time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
 
 			// if serial delay is lower than or equals 0
 			if (this.serialDelay <= 0) {
-				// decrease send time
-				this.sendTime -= 0.1;
+				// decrease send time in seconds, 10ms less for each timer run.
+				this.sendTime -= 0.01;
 			}
 
-			// decrease serial delay
-			this.serialDelay -= 100;
+			// decrease serial delay by 10ms, as this is the time cycle time
+			this.serialDelay -= 10;
 		}
 
 		// check slot
@@ -75,7 +79,7 @@ public class Scheduler extends TimerTask {
 			Main.drawSlots();
 		}
 
-		// if send time is lower than or equals 0
+		// if transmission duration is over, switch transmitter off
 		if (this.sendTime <= 0) {
 			// set pin to off
 			if (Main.serialPortComm != null)
@@ -84,19 +88,22 @@ public class Scheduler extends TimerTask {
 				Main.gpioPortComm.setOff();
 		}
 
-		// if send time is lower than or equals 0 and there is at least 1 slot
-		// and current slot is not the same as last slot
-		// and the message queue is not empty
+		// if last transmission is done (send time <= 0) &&
+		// there is at least 1 slot &&
+		// current slot is not the same as last slot &&
+		// the message queue is not empty
+		// ---> Prepare next transmission
+		// *** This means that data was received during active time slots ***
 		if (this.sendTime <= 0 && slotCount > 0 && !isLastSlot && !Main.messageQueue.isEmpty()) {
 			log("Scheduler: checkSlot# Erlaubter Slot (" + slot + ") - Anzahl " + slotCount, Log.INFO);
 
 			// set serial delay
 			this.serialDelay = Main.config.getDelay();
 
-			// get data
+			// get data and *** set sendTime according to delay and slot count ***
 			getData(slotCount);
 
-			// set pin to on
+			// Set Transmitter to on.
 			if (Main.serialPortComm != null)
 				Main.serialPortComm.setOn();
 			if (Main.gpioPortComm != null)
@@ -105,26 +112,23 @@ public class Scheduler extends TimerTask {
 
 		// if serial delay is lower than or equals 0 and there is data
 		if (this.serialDelay <= 0 && data != null) {
-
 			// play data and set data to null
 			AudioEncoder.play(data);
 			data = null;
 		}
-
 	}
 
 	// get data depending on slot count
 	public void getData(int slotCount) {
 		// send batches
-		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
-		// (1 = sync)) * bits per frame)
+		// max batches per slot: (slot time - preamble time) / bps / ((frames + (1 = sync)) * bits per frame)
 		// (3,75 - 0,48) * 1200 / ((16 + 1) * 32)
 		int maxBatch = (int) ((6.40 * slotCount - 0.48 - Main.config.getDelay() / 1000) * 1200 / 544);
 
 		// create data
-		data = new ArrayList<Integer>();
+		data = new ArrayList<>();
 
-		// add praeembel
+		// add preamble
 		for (int i = 0; i < 18; i++) {
 			data.add(Pocsag.PRAEEMBEL);
 		}
@@ -139,14 +143,11 @@ public class Scheduler extends TimerTask {
 			int framePos = cwBuf.get(0);
 			int cwCount = cwBuf.size() - 1;
 
-			// Falls message nicht mehr passt (da dann zu viele Batches), zurück
-			// in Queue
+			// falls message nicht mehr passt (da dann zu viele Batches), zurück in Queue
 
 			// (data.size() - 18) / 17 = aktBatches
-			// aktBatches + (cwCount + 2 * framePos) / 16 + 1 = Batches NACH
-			// hinzufügen
-			// also Batches NACH hinzufügen > maxBatches, dann keine neue
-			// Nachricht holen
+			// aktBatches + (cwCount + 2 * framePos) / 16 + 1 = Batches NACH hinzufügen
+			// also Batches NACH hinzufügen > maxBatches, dann keine neue Nachricht holen
 			// if count of batches + this message is greater than max batches
 			if (((data.size() - 18) / 17 + (cwCount + 2 * framePos) / 16 + 1) > maxBatch) {
 				// push message back in queue (first position)
@@ -181,8 +182,11 @@ public class Scheduler extends TimerTask {
 		log("Scheduler: # used batches (" + ((data.size() - 18) / 17) + " / " + maxBatch + ")", Log.INFO);
 
 		// set send time
-		// data.size() * 32 = bits / 1200 = send time
-		this.sendTime = data.size() * 2.0 / 75.0 + 0.1;
+		// data.size gives number of 32 bit values, so total bit number = data.size() * 32
+		// time in seconds needs to send this is = total bit number / 1200 Bit/sec
+		// reason for +0.1 unknown ??
+
+		this.sendTime = ((data.size() * 32.0) / 1200) + 0.1;
 	}
 
 	// get current time
@@ -191,23 +195,7 @@ public class Scheduler extends TimerTask {
 	}
 
 	// correct time by delay
-	/*
-	 * public void correctTime(int delay) { // if delay equals 0, there is no
-	 * correction needed if(delay == 0) return;
-	 * 
-	 * // set active to false this.active = false;
-	 * 
-	 * // if delay is greater 0 if(delay > 0) { // then add delay to current
-	 * time this.time = (this.time + delay) % this.max; } // if delay is lower 0
-	 * else if(delay < 0) { // then add delay to current time (after that check
-	 * if time is lower than 0) if((this.time += delay) < 0) { this.time +=
-	 * this.max - 1; } }
-	 * 
-	 * // set active to true this.active = true; }
-	 */
-	// correct time by delay
 	public void correctTime(int delay) {
 		this.delay += delay;
-
 	}
 }

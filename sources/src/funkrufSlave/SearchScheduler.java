@@ -16,17 +16,19 @@ public class SearchScheduler extends Scheduler {
 		// if active
 		if (active) {
 			// increase time
-			this.time = ++this.time % this.max;
+			// this.time = ++this.time % this.max;
+			// still get local time in 0.1s, add (or sub) correction (here: delay) from master,
+			// and take lowest 16 bits (this.max)
+			this.time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
 
-			// if serial delay is lower than or equals 0, decrease send time
+			// if serial delay is lower than or equals 0
 			if (this.serialDelay <= 0) {
-				if (this.sendTime > 0)
-					this.sendTime -= 0.1f;
+				// decrease send time in seconds, 10ms less for each timer run.
+				this.sendTime -= 0.01;
 			}
 
-			// decrease serial delay
-			if (this.serialDelay > 0)
-				this.serialDelay -= 100;
+			// decrease serial delay by 10ms, as this is the time cycle time
+			this.serialDelay -= 10;
 		}
 
 		// check slot
@@ -39,7 +41,7 @@ public class SearchScheduler extends Scheduler {
 			Main.drawSlots();
 		}
 
-		// if send time is lower than or equals 0
+		// if transmission duration is over, switch transmitter off
 		if (this.sendTime <= 0) {
 			// set pin (serial port) to off
 			if (Main.serialPortComm != null)
