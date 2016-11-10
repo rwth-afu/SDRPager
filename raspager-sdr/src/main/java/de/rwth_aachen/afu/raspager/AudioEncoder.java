@@ -189,9 +189,9 @@ final class AudioEncoder {
 					}
 				}
 
-				comp /= 2; // shift bit selection mask 1 bit right to select the
-							// next bit in the following loop
-
+				// shift bit selection mask 1 bit right to select the
+				// next bit in the following loop
+				comp /= 2;
 			}
 		}
 

@@ -38,8 +38,8 @@ public final class Main {
 
 	public static boolean running = false;
 
-	public static final float DEFAULT_SEARCH_STEP_WIDTH = 0.05f;
-	public static float searchStepWidth = DEFAULT_SEARCH_STEP_WIDTH;
+	public static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
+	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 
 	private static final Configuration config = new Configuration();
 
@@ -300,7 +300,7 @@ public final class Main {
 	}
 
 	public static float getStepSize() {
-		float stepWidth = searchStepWidth;
+		float stepWidth = searchStepSize;
 
 		if (mainWindow != null) {
 			String s = mainWindow.getStepWidth();

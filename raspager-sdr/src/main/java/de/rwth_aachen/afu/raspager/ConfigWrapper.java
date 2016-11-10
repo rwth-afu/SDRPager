@@ -78,11 +78,11 @@ public final class ConfigWrapper {
 	}
 
 	public String getRaspiRev() {
-		return cfg.getString("raspirev", null);
+		return cfg.getString("gpio.raspirev", null);
 	}
 
 	public void setRaspiRev(String rev) {
-		setOrRemove("raspirev", rev);
+		setOrRemove("gpio.raspirev", rev);
 	}
 
 	public boolean useGpio() {

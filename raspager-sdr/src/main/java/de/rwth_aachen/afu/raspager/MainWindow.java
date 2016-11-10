@@ -1047,7 +1047,7 @@ public class MainWindow extends JFrame {
 
 	public String getStepWidth() {
 		if (searchStepWidth.getText().equals("")) {
-			searchStepWidth.setText("" + Main.searchStepWidth);
+			searchStepWidth.setText("" + Main.searchStepSize);
 		}
 
 		return searchStepWidth.getText();
