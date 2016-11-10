@@ -42,6 +42,18 @@ public class TimeSlots {
 		return count;
 	}
 
+	public int checkSlotInt(int iSlot) {
+		int count = 0;
+
+		for (int slot = iSlot; this.slots[slot % 16] && slot < iSlot + 16; slot++) {
+			// count allowed slots
+			count++;
+		}
+
+		return count;
+	}
+
+
 	// get all allowed slots as string
 	public String getSlots() {
 		String s = "";
@@ -89,4 +101,8 @@ public class TimeSlots {
 		return this.lastSlot == cSlot;
 	}
 
+	public boolean nextSlotIsActive(int time) {
+		// Check if next slot is active
+		return this.checkSlotInt((this.getCurrentSlotInt(time) + 1 ) % 16) > 0;
+	}
 }

@@ -5,7 +5,6 @@ import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -14,7 +13,7 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Main {
-	public static final String VERSION = "1.4";
+	public static final String VERSION = "1.5";
 
 	public static ServerThread server;
 	public static Deque<Message> messageQueue;
@@ -259,8 +258,8 @@ public class Main {
 			return;
 		}
 
-		// run scheduler now and then every 10ms
-		timer.schedule(scheduler, 0, 10);
+		// run scheduler now and then every Scheduler.TIMERCYCLE_MS ms
+		timer.schedule(scheduler, 0, Scheduler.TIMERCYCLE_MS);
 	}
 
 	// stop scheduler

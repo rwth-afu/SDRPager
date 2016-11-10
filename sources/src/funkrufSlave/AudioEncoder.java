@@ -15,9 +15,7 @@ public class AudioEncoder {
 	public static float correction = DEFAULT_CORRECTION; // for correction
 	// public static float correction = -1;
 
-	public static void play(byte[] inputData) {
-		byte[] soundData = encode(inputData);
-
+	public static void play(byte[] inputData, Scheduler scheduler) {
 		try {
 			Clip c = AudioSystem.getClip(Main.config.getSoundDevice());
 
@@ -36,31 +34,21 @@ public class AudioEncoder {
 			 * c.open(inputStream);
 			 */
 
-			c.open(af48000, soundData, 0, soundData.length); // auskommentieren, falls Downsampling verwendet werden soll
+			c.open(af48000, inputData, 0, inputData.length); // auskommentieren, falls Downsampling verwendet werden soll
 			c.addLineListener(e -> {
 				if (e.getType() == LineEvent.Type.STOP) {
 					c.close();
 					e.getLine().close();
 
-					// turn transmitter off
-					if (Main.serialPortComm != null) Main.serialPortComm.setOff();
-					if (Main.gpioPortComm != null) Main.gpioPortComm.setOff();
+					scheduler.Notify_Audio_is_sent_completely();
 				}
 			});
-
-			// turn transmitter on
-			if (Main.serialPortComm != null) Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null) Main.gpioPortComm.setOn();
 
 			c.start();
 			c.loop(0);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	public static void play(ArrayList<Integer> inputData) {
-		play(getByteData(inputData));
 	}
 
 	public static byte[] encode(byte[] inputData) {

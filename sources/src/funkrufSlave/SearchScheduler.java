@@ -13,7 +13,7 @@ public class SearchScheduler extends Scheduler {
 	// "main"
 	@Override
 	public void run() {
-		// if active
+		/*// if active
 		if (active) {
 			// increase time
 			// this.time = ++this.time % this.max;
@@ -45,6 +45,11 @@ public class SearchScheduler extends Scheduler {
 		if ((!isLastSlot || firstTime)) {
 			// get data (slotCount = 0, because it is not needed here)
 			getData(0);
+
+			// turn transmitter on
+			Main.log.println("Turning transmitter on...", Log.INFO);
+			if (Main.serialPortComm != null) Main.serialPortComm.setOn();
+			if (Main.gpioPortComm != null) Main.gpioPortComm.setOn();
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
@@ -52,13 +57,13 @@ public class SearchScheduler extends Scheduler {
 			// play data and set data to null
 			AudioEncoder.play(data);
 			data = null;
-		}
+		}*/
 	}
 
 	// get data depending on slot count
 	@Override
 	public void getData(int slotCount) {
-		this.serialDelay = Main.config.getDelay();
+		/*this.serialDelay = Main.config.getDelay();
 
 		// if it is not the first time
 		if (!firstTime) {
@@ -110,7 +115,7 @@ public class SearchScheduler extends Scheduler {
 		}
 
 		// set send time
-		this.sendTime = data.size() * 2f / 75f + 0.1;
+		this.sendTime = data.size() * 2f / 75f + 0.1;*/
 	}
 
 	private void addMessage(Message message) {

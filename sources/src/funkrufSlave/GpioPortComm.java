@@ -35,6 +35,7 @@ public class GpioPortComm {
 		this.gpioPin.setShutdownOptions(true, PinState.LOW);
 
 		this.curOn = false;
+		setOff();
 	}
 
 	// set pin on
@@ -61,12 +62,12 @@ public class GpioPortComm {
 			gpioPin.low();
 			this.curOn = true;
 
-			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to on", Log.INFO);
+			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to low", Log.INFO);
 		} else if (!on && curOn) {
 			gpioPin.high();
 			this.curOn = false;
 
-			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to off", Log.INFO);
+			log("GpioPortComm # Set Pin " + this.gpioPin.getName() + " to high", Log.INFO);
 		}
 	}
 
