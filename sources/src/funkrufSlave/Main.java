@@ -5,6 +5,7 @@ import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -13,7 +14,7 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Main {
-	public static final String VERSION = "1.3";
+	public static final String VERSION = "1.4";
 
 	public static ServerThread server;
 	public static Deque<Message> messageQueue;
@@ -474,8 +475,9 @@ public class Main {
 		System.setOut(out);
 
 		// write name, version and authors
-		System.out.println("FunkrufSlave - Version " + VERSION
-				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at https://github.com/dh3wr/SDRPager/releases\n");
+		System.out.println("FunkrufSlave - Version " + VERSION + "\n" +
+				"by Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\n" +
+				"New Versions at https://github.com/rwth-afu/SDRPager/releases\n");
 
 		// parse arguments
 		parseArguments(args);
@@ -500,6 +502,5 @@ public class Main {
 			// if no gui, start server and join
 			startServer(true);
 		}
-
 	}
 }
