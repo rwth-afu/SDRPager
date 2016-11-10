@@ -1,4 +1,4 @@
-package de.rwth_aachen.afu.raspager;
+package de.rwth_aachen.afu.raspager.sdr;
 
 import java.util.ArrayList;
 import java.util.Enumeration;

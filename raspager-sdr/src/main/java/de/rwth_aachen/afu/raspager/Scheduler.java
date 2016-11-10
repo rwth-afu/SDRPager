@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 class Scheduler extends TimerTask {
@@ -24,14 +25,14 @@ class Scheduler extends TimerTask {
 	protected int serialDelay = 0;
 	protected List<Integer> data;
 
-	protected final AudioEncoder encoder;
+	protected final Transmitter transmitter;
 	protected final int cfgDelay;
 
-	public Scheduler(Configuration config, Deque<Message> messageQueue) {
+	public Scheduler(Configuration config, Transmitter transmitter, Deque<Message> messageQueue) {
 		this.messageQueue = messageQueue;
+		this.transmitter = transmitter;
 
 		cfgDelay = config.getInt("delay", 0);
-		encoder = new AudioEncoder(config.getString("soundDevice"));
 	}
 
 	@Override
@@ -39,8 +40,8 @@ class Scheduler extends TimerTask {
 		// if active
 		if (active) {
 			// increase time
-			// this.time = ++this.time % this.max;
-			time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
+			// time = ++time % max;
+			time = ((int) (System.currentTimeMillis() / 100) + delay) % max;
 
 			// if serial delay is lower than or equals 0
 			if (serialDelay <= 0) {
@@ -65,15 +66,6 @@ class Scheduler extends TimerTask {
 			Main.drawSlots();
 		}
 
-		// if send time is lower than or equals 0
-		if (sendTime <= 0) {
-			// set pin to off
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOff();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOff();
-		}
-
 		// if send time is lower than or equals 0 and there is at least 1 slot
 		// and current slot is not the same as last slot
 		// and the message queue is not empty
@@ -85,20 +77,17 @@ class Scheduler extends TimerTask {
 
 			// get data
 			updateData(slotCount);
-
-			// set pin to on
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOn();
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
 		if (serialDelay <= 0 && data != null) {
-
-			// play data and set data to null
-			encoder.play(data);
-			data = null;
+			try {
+				transmitter.send(data);
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Failed to send data.", ex);
+			} finally {
+				data = null;
+			}
 		}
 	}
 
@@ -196,13 +185,5 @@ class Scheduler extends TimerTask {
 	// correct time by delay
 	public void correctTime(int delay) {
 		this.delay += delay;
-	}
-
-	public float getCorrection() {
-		return encoder.getCorrection();
-	}
-
-	public void setCorrection(float correction) {
-		encoder.setCorrection(correction);
 	}
 }

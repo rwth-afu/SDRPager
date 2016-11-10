@@ -15,6 +15,8 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 
+import de.rwth_aachen.afu.raspager.sdr.SerialPortComm;
+
 public class Config {
 	private static final Logger log = Logger.getLogger(Config.class.getName());
 

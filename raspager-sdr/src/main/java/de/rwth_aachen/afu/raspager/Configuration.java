@@ -12,7 +12,7 @@ import java.util.Properties;
  * 
  * @author Philipp Thiel
  */
-final class Configuration {
+public final class Configuration {
 	private final Properties props = new Properties();
 
 	/**

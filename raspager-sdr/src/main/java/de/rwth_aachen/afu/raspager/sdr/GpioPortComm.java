@@ -1,4 +1,4 @@
-package de.rwth_aachen.afu.raspager;
+package de.rwth_aachen.afu.raspager.sdr;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

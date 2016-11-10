@@ -6,14 +6,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
+
 class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
 	private final float cfgStepSize;
 	// for first message (the correction should not be increased at first time)
 	private boolean firstTime = true;
 
-	public SearchScheduler(Configuration config, Deque<Message> messageQueue) {
-		super(config, messageQueue);
+	public SearchScheduler(Configuration config, SDRTransmitter transmitter, Deque<Message> messageQueue) {
+		super(config, transmitter, messageQueue);
 
 		cfgStepSize = config.getFloat("stepSize");
 	}
@@ -46,52 +48,45 @@ class SearchScheduler extends Scheduler {
 			Main.drawSlots();
 		}
 
-		// if send time is lower than or equals 0
-		if (this.sendTime <= 0) {
-			// set pin (serial port) to off
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOff();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOff();
-		}
-
 		// if slot is not the last slot or it is the first time
 		if ((!isLastSlot || firstTime)) {
 			// get data (slotCount = 0, because it is not needed here)
 			updateData(0);
-
-			// set pin (serial port) to on
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOn();
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
 		if (this.serialDelay <= 0 && data != null) {
-			// play data and set data to null
-			encoder.play(data);
-			data = null;
+			try {
+				transmitter.send(data);
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Failed to send data.", ex);
+			} finally {
+				data = null;
+			}
 		}
 	}
 
 	// get data depending on slot count
 	@Override
 	public void updateData(int slotCount) {
-		this.serialDelay = cfgDelay;
+		serialDelay = cfgDelay;
+		SDRTransmitter sdr = (SDRTransmitter) transmitter;
 
 		// if it is not the first time
 		if (!firstTime) {
 			// is correction lower than 1.0?
-			if (encoder.getCorrection() < 1.0f) {
-				log.log(Level.FINE, "Correction: {0}", encoder.getCorrection());
+			float correction = sdr.getCorrection();
+			if (correction < 1.0f) {
+				log.log(Level.FINE, "Correction: {0}", correction);
 
 				// increase correction or set it to 1.0
-				if (encoder.getCorrection() + cfgStepSize > 1.0f) {
-					encoder.setCorrection(1.0f);
+				if (correction + cfgStepSize > 1.0f) {
+					correction = 1.0f;
 				} else {
-					encoder.setCorrection(encoder.getCorrection() + cfgStepSize);
+					correction += cfgStepSize;
 				}
+
+				sdr.setCorrection(correction);
 
 				// if there is the main window
 				if (Main.mainWindow != null) {
@@ -125,7 +120,7 @@ class SearchScheduler extends Scheduler {
 		// send message to skyper address
 		if (!skyperAddress.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", skyperAddress, "3",
-					String.format("correction=%+4.2f", encoder.getCorrection()) };
+					String.format("correction=%+4.2f", sdr.getCorrection()) };
 
 			// StringBuilder sb = new StringBuilder();
 			// sb.append("#00 6:1:");

@@ -16,9 +16,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.UnsupportedCommOperationException;
+import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 
 public final class Main {
 	private static final Logger log = Logger.getLogger(Main.class.getName());
@@ -27,21 +25,19 @@ public final class Main {
 	// TODO Get rid of all these static global vars
 	public static ThreadWrapper<FunkrufServer> server;
 	private static Deque<Message> messageQueue;
-	public static Timer timer;
 	public static Scheduler scheduler;
 	public static TimeSlots timeSlots;
-	public static SerialPortComm serialPortComm;
-	public static GpioPortComm gpioPortComm;
-
-	public static MainWindow mainWindow = null;
-	public static boolean showGui = true;
-
+	private static SDRTransmitter transmitter = new SDRTransmitter();
+	public static MainWindow mainWindow;
+	private static boolean showGui = true;
 	public static boolean running = false;
 
 	public static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
 	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 
 	private static final Configuration config = new Configuration();
+
+	private static final Timer timer = new Timer();
 
 	private static boolean parseArguments(String[] args) {
 		Options opts = new Options();
@@ -88,117 +84,39 @@ public final class Main {
 		return true;
 	}
 
-	private static boolean initSerialPortComm() {
-		if (!config.getBoolean("useSerial", false))
-			return true;
-
-		if (serialPortComm == null) {
-			try {
-				// initialize serial port
-				serialPortComm = new SerialPortComm(config.getString("serialPort"), config.getInt("serialPin"),
-						config.getBoolean("invert"));
-			} catch (NoSuchPortException e) {
-				// no such port exception
-				log.log(Level.SEVERE, "Serial port does not exist.", e);
-
-				if (mainWindow != null) {
-					mainWindow.showError("Server starten", "Serieller Port existiert nicht!");
-				}
-
-				return false;
-
-			} catch (PortInUseException e) {
-				// port in use exception
-				log.log(Level.SEVERE, "Serial port already in use.", e);
-
-				if (mainWindow != null) {
-					mainWindow.showError("Server starten", "Serieller Port wird bereits benutzt!");
-				}
-
-				return false;
-
-			} catch (UnsupportedCommOperationException e) {
-				// unsupported comm operation exception
-				log.log(Level.SEVERE, "Unsupported comm operation.", e);
-
-				if (mainWindow != null) {
-					mainWindow.showError("Server starten",
-							"Beim Initialisieren der seriellen Schnittstelle ist ein Fehler aufgetreten!");
-				}
-
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	private static boolean initGpioPortComm() {
-		if (!config.getBoolean("useGPIO", false))
-			return true;
-
-		if (gpioPortComm == null) {
-			gpioPortComm = new GpioPortComm(config.getString("gpioPin"), config.getBoolean("invert", false));
-			return true;
-		}
-
-		log.severe("Failed to initialize GPIO port.");
-
-		if (mainWindow != null) {
-			mainWindow.showError("Server starten", "GPIO-Schnittstelle konnte nicht initialisiert werden!");
-		}
-
-		return false;
-	}
-
 	// start scheduler (or search scheduler)
 	public static void startScheduler(boolean searching) {
-		if (timer == null) {
-			timer = new Timer();
-			scheduler = searching ? new SearchScheduler(config, messageQueue) : new Scheduler(config, messageQueue);
-		}
-
-		if (!initSerialPortComm()) {
-			stopScheduler();
-
+		try {
+			transmitter.init(config);
+		} catch (Exception ex) {
 			if (mainWindow != null) {
-				mainWindow.resetButtons();
+				mainWindow.showError("Failed to init transmitter", ex.getMessage());
 			}
+
 			return;
 		}
 
-		if (!initGpioPortComm()) {
-			stopScheduler();
-
-			if (mainWindow != null) {
-				mainWindow.resetButtons();
-			}
-			return;
+		if (searching) {
+			scheduler = new SearchScheduler(config, transmitter, messageQueue);
+		} else {
+			scheduler = new Scheduler(config, transmitter, messageQueue);
 		}
 
 		timer.schedule(scheduler, 100, 100);
 	}
 
 	public static void stopScheduler() {
-		if (timer != null) {
-			timer.cancel();
-			timer = null;
-		}
+		timer.cancel();
+
 		if (scheduler != null) {
 			scheduler.cancel();
 			scheduler = null;
 		}
 
-		// close serial port
-		if (serialPortComm != null) {
-			serialPortComm.close();
-			serialPortComm = null;
-		}
-
-		// close gpio communication
-		if (gpioPortComm != null) {
-			gpioPortComm.close();
-			gpioPortComm = null;
+		try {
+			transmitter.close();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Failed to close transmitter.", e);
 		}
 	}
 
@@ -337,13 +255,6 @@ public final class Main {
 		return s;
 	}
 
-	public static void closeSerialPort() {
-		if (serialPortComm != null) {
-			serialPortComm.close();
-			serialPortComm = null;
-		}
-	}
-
 	public static void main(String[] args) {
 		// to prevent rxtx to write to console
 		PrintStream out = System.out;
@@ -377,11 +288,16 @@ public final class Main {
 		// if gui
 		if (showGui) {
 			// create mainWindow
-			mainWindow = new MainWindow(new ConfigWrapper(config));
+			mainWindow = new MainWindow(new ConfigWrapper(config), transmitter);
 		} else {
 			// if no gui, start server and join
 			startServer(true);
 		}
 
+		try {
+			transmitter.close();
+		} catch (Throwable t) {
+			log.log(Level.SEVERE, "Failed to close transmitter.", t);
+		}
 	}
 }

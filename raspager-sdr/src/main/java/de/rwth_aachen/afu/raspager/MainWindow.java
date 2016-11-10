@@ -53,6 +53,9 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 
+import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
+import de.rwth_aachen.afu.raspager.sdr.SerialPortComm;
+
 public class MainWindow extends JFrame {
 	private static final Logger log = Logger.getLogger(MainWindow.class.getName());
 	private static final long serialVersionUID = 1L;
@@ -90,10 +93,12 @@ public class MainWindow extends JFrame {
 	private JTextField searchAddress;
 
 	private final ConfigWrapper config;
+	private final SDRTransmitter transmitter;
 
 	// constructor
-	public MainWindow(ConfigWrapper config) {
+	public MainWindow(ConfigWrapper config, SDRTransmitter transmitter) {
 		this.config = config;
+		this.transmitter = transmitter;
 
 		// set window preferences
 		setTitle("FunkrufSlave");
@@ -125,9 +130,6 @@ public class MainWindow extends JFrame {
 					// stop server
 					Main.stopServer(false);
 				}
-
-				// close log and serial port
-				Main.closeSerialPort();
 
 				// dispose window
 				dispose();
@@ -202,7 +204,7 @@ public class MainWindow extends JFrame {
 			public void stateChanged(ChangeEvent e) {
 				// set correction
 				correctionActual.setText(String.format("%+5.2f", correctionSlider.getValue() / 100.));
-				Main.scheduler.setCorrection(correctionSlider.getValue() / 100.0f);
+				transmitter.setCorrection(correctionSlider.getValue() / 100.0f);
 			}
 		});
 		main.add(correctionSlider);
@@ -1058,7 +1060,7 @@ public class MainWindow extends JFrame {
 	}
 
 	public void updateCorrection() {
-		correctionActual.setText(String.format("%+4.2f", Main.scheduler.getCorrection()));
-		correctionSlider.setValue((int) (Main.scheduler.getCorrection() * 100));
+		correctionActual.setText(String.format("%+4.2f", transmitter.getCorrection()));
+		correctionSlider.setValue((int) (transmitter.getCorrection() * 100));
 	}
 }
