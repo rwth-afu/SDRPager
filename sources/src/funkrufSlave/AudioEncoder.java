@@ -38,8 +38,16 @@ public class AudioEncoder {
 				if (e.getType() == LineEvent.Type.STOP) {
 					c.close();
 					e.getLine().close();
+
+					// turn transmitter off
+					if (Main.serialPortComm != null) Main.serialPortComm.setOff();
+					if (Main.gpioPortComm != null) Main.gpioPortComm.setOff();
 				}
 			});
+
+			// turn transmitter on
+			if (Main.serialPortComm != null) Main.serialPortComm.setOn();
+			if (Main.gpioPortComm != null) Main.gpioPortComm.setOn();
 
 			c.start();
 			c.loop(0);

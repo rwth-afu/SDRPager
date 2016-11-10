@@ -41,25 +41,10 @@ public class SearchScheduler extends Scheduler {
 			Main.drawSlots();
 		}
 
-		// if transmission duration is over, switch transmitter off
-		if (this.sendTime <= 0) {
-			// set pin (serial port) to off
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOff();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOff();
-		}
-
 		// if slot is not the last slot or it is the first time
 		if ((!isLastSlot || firstTime)) {
 			// get data (slotCount = 0, because it is not needed here)
 			getData(0);
-
-			// set pin (serial port) to on
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOn();
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
@@ -103,7 +88,7 @@ public class SearchScheduler extends Scheduler {
 		}
 
 		// create data
-		data = new ArrayList<Integer>();
+		data = new ArrayList<>();
 
 		// add praeambel
 		for (int i = 0; i < 18; i++) {

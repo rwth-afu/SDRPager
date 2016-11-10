@@ -79,15 +79,6 @@ public class Scheduler extends TimerTask {
 			Main.drawSlots();
 		}
 
-		// if transmission duration is over, switch transmitter off
-		if (this.sendTime <= 0) {
-			// set pin to off
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOff();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOff();
-		}
-
 		// if last transmission is done (send time <= 0) &&
 		// there is at least 1 slot &&
 		// current slot is not the same as last slot &&
@@ -102,12 +93,6 @@ public class Scheduler extends TimerTask {
 
 			// get data and *** set sendTime according to delay and slot count ***
 			getData(slotCount);
-
-			// Set Transmitter to on.
-			if (Main.serialPortComm != null)
-				Main.serialPortComm.setOn();
-			if (Main.gpioPortComm != null)
-				Main.gpioPortComm.setOn();
 		}
 
 		// if serial delay is lower than or equals 0 and there is data
