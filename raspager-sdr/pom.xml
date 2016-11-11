@@ -111,6 +111,9 @@
 		</plugins>
 		<resources>
 			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
 				<directory>config</directory>
 				<targetPath>${project.build.directory}</targetPath>
 				<includes>

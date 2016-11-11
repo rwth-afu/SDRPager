@@ -26,6 +26,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,8 +47,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
@@ -75,15 +74,15 @@ public class MainWindow extends JFrame {
 	private JTextField masterIP;
 	private JTextField port;
 	private Canvas slotDisplay;
-	private JPanel panel_serial;
-	private JPanel panel_gpio;
+	private JPanel serialPanel;
+	private JPanel gpioPanel;
 	private JComboBox<String> serialPortList;
 	private JComboBox<String> serialPin;
 	private JCheckBox invert;
 	private JTextField delay;
 	private JComboBox raspiList;
 	private JComboBox gpioList;
-	private JButton btnGpiopins;
+	private JButton btnGpioPins;
 	private JRadioButton radioUseSerial;
 	private JRadioButton radioUseGpio;
 	private JComboBox soundDeviceList;
@@ -95,11 +94,15 @@ public class MainWindow extends JFrame {
 	private final Configuration config;
 	private final SDRTransmitter transmitter;
 	private TimeSlots timeSlots = null;
+	private final ResourceBundle texts;
 
 	// constructor
 	public MainWindow(Configuration config, SDRTransmitter transmitter) {
 		this.config = config;
 		this.transmitter = transmitter;
+
+		// Load locale stuff
+		texts = ResourceBundle.getBundle("MainWindow");
 
 		// set window preferences
 		setTitle("FunkrufSlave");
@@ -120,8 +123,7 @@ public class MainWindow extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent event) {
 				// if server is running, ask to quit
-				if (Main.running
-						&& !showConfirm("Beenden", "Der Server laeuft zur Zeit. Wollen Sie wirklich beenden?")) {
+				if (Main.running && !showConfirm(texts.getString("askQuitTitle"), texts.getString("askQuitText"))) {
 					return;
 				}
 
@@ -164,7 +166,7 @@ public class MainWindow extends JFrame {
 		Rectangle correctionSliderBounds = new Rectangle(100, 68, 30, 260);
 
 		// correction slider label
-		JLabel correctionLabel = new JLabel("Korrektur");
+		JLabel correctionLabel = new JLabel(texts.getString("correctionLabel"));
 		correctionLabel.setBounds(correctionSliderBounds.x - 20, correctionSliderBounds.y - 38, 80, 18);
 		main.add(correctionLabel);
 
@@ -204,12 +206,12 @@ public class MainWindow extends JFrame {
 		main.add(correctionSlider);
 
 		// search run label
-		JLabel searchLabel = new JLabel("Suchlauf");
+		JLabel searchLabel = new JLabel(texts.getString("searchLabel"));
 		searchLabel.setBounds(200, 414, 100, 18);
 		main.add(searchLabel);
 
 		// search run start
-		searchStart = new JButton("Start");
+		searchStart = new JButton(texts.getString("searchStart"));
 		searchStart.setBounds(200, 434, 70, 18);
 		searchStart.addActionListener((e) -> {
 			runSearch(true);
@@ -217,7 +219,7 @@ public class MainWindow extends JFrame {
 		main.add(searchStart);
 
 		// search run stop
-		searchStop = new JButton("Stop");
+		searchStop = new JButton(texts.getString("searchStop"));
 		searchStop.setBounds(275, 434, 70, 18);
 		searchStop.setEnabled(false);
 		searchStop.addActionListener((e) -> {
@@ -226,7 +228,7 @@ public class MainWindow extends JFrame {
 		main.add(searchStop);
 
 		// search run step label
-		JLabel searchStepLabel = new JLabel("Schrittweite:");
+		JLabel searchStepLabel = new JLabel(texts.getString("searchStepLabel"));
 		searchStepLabel.setBounds(350, 414, 100, 18);
 		main.add(searchStepLabel);
 
@@ -254,7 +256,7 @@ public class MainWindow extends JFrame {
 		main.add(searchStepWidth);
 
 		// search address label
-		JLabel searchAddressLabel = new JLabel("Skyper-Adresse:");
+		JLabel searchAddressLabel = new JLabel(texts.getString("searchAddressLabel"));
 		searchAddressLabel.setBounds(455, 414, 120, 18);
 		main.add(searchAddressLabel);
 
@@ -285,7 +287,7 @@ public class MainWindow extends JFrame {
 		Rectangle slotDisplayBounds = new Rectangle(10, 68, 30, 260);
 
 		// slot display label
-		JLabel slotDisplayLabel = new JLabel("Slots");
+		JLabel slotDisplayLabel = new JLabel(texts.getString("slotDisplayLabel"));
 		slotDisplayLabel.setBounds(slotDisplayBounds.x - 2, slotDisplayBounds.y - 38, 50, 18);
 		main.add(slotDisplayLabel);
 
@@ -364,12 +366,12 @@ public class MainWindow extends JFrame {
 		Rectangle statusDisplayBounds = new Rectangle(320, 10, 120, 18);
 
 		// status display label
-		JLabel statusDisplayLabel = new JLabel("Status:");
+		JLabel statusDisplayLabel = new JLabel(texts.getString("statusDisplayLabel"));
 		statusDisplayLabel.setBounds(200, 10, 60, 18);
 		main.add(statusDisplayLabel);
 
 		// status display
-		statusDisplay = new JLabel("getrennt");
+		statusDisplay = new JLabel(texts.getString("statusDisplayDis"));
 		statusDisplay.setBounds(new Rectangle(263, 10, 120, 18));
 		main.add(statusDisplay);
 
@@ -378,15 +380,15 @@ public class MainWindow extends JFrame {
 				statusDisplayBounds.y, 150, 18);
 
 		// server start button
-		startButton = new JButton("Server starten");
+		startButton = new JButton(texts.getString("startButtonStart"));
 		startButton.addActionListener((e) -> {
 			if (Main.running) {
 				Main.stopServer(false);
-				startButton.setText("Server starten");
+				startButton.setText(texts.getString("startButtonStart"));
 
 			} else {
 				Main.startServer(false);
-				startButton.setText("Server stoppen");
+				startButton.setText(texts.getString("startButtonStop"));
 			}
 		});
 		startButton.setBounds(new Rectangle(675, 10, 150, 18));
@@ -394,8 +396,8 @@ public class MainWindow extends JFrame {
 
 		// configuration panel
 		JPanel configurationPanel = new JPanel(null);
-		configurationPanel
-				.setBorder(new TitledBorder(null, "Konfiguration", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		configurationPanel.setBorder(new TitledBorder(null, texts.getString("configurationPanel"), TitledBorder.LEADING,
+				TitledBorder.TOP, null, null));
 		configurationPanel.setBounds(new Rectangle(200, 30, 625, 372));
 		main.add(configurationPanel);
 
@@ -403,7 +405,7 @@ public class MainWindow extends JFrame {
 		Rectangle masterListBounds = new Rectangle(0, 30, 150, 200);
 
 		// master list label
-		JLabel masterListLabel = new JLabel("Master");
+		JLabel masterListLabel = new JLabel(texts.getString("masterListLabel"));
 		masterListLabel.setBounds(12, 20, 70, 18);
 		configurationPanel.add(masterListLabel);
 
@@ -417,7 +419,7 @@ public class MainWindow extends JFrame {
 		configurationPanel.add(masterListPane);
 
 		// serial delay label
-		JLabel serialDelayLabel = new JLabel("Delay:");
+		JLabel serialDelayLabel = new JLabel(texts.getString("serialDelayLabel"));
 		serialDelayLabel.setBounds(174, 292, 50, 18);
 		configurationPanel.add(serialDelayLabel);
 
@@ -486,9 +488,9 @@ public class MainWindow extends JFrame {
 		configurationPanel.add(port);
 
 		// sounddevice
-		JLabel lblSoundkarte = new JLabel("Soundgerät:");
-		lblSoundkarte.setBounds(174, 318, 100, 15);
-		configurationPanel.add(lblSoundkarte);
+		JLabel soundDeviceLabel = new JLabel(texts.getString("soundDeviceLabel"));
+		soundDeviceLabel.setBounds(174, 318, 100, 15);
+		configurationPanel.add(soundDeviceLabel);
 
 		soundDeviceList = new JComboBox();
 		soundDeviceList.setBounds(265, 316, 349, 18);
@@ -502,7 +504,7 @@ public class MainWindow extends JFrame {
 		Rectangle configButtonBounds = new Rectangle(0, portBounds.y + portBounds.height + 20, 130, 18);
 
 		// config apply button
-		JButton applyButton = new JButton("Übernehmen");
+		JButton applyButton = new JButton(texts.getString("applyButton"));
 		applyButton.addActionListener((e) -> {
 			setConfig();
 		});
@@ -513,16 +515,17 @@ public class MainWindow extends JFrame {
 		configButtonBounds.width = 100;
 
 		// config load button
-		JButton loadButton = new JButton("Laden");
+		JButton loadButton = new JButton(texts.getString("loadButton"));
 		loadButton.addActionListener((event) -> {
 			JFileChooser fileChooser = new JFileChooser("");
-			if (fileChooser.showOpenDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
+			if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 				File file = fileChooser.getSelectedFile();
 
 				try {
 					config.load(file.getPath());
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "Invalid configuration file.", e);
+					// TODO localize
 					showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
 
 					return;
@@ -539,10 +542,10 @@ public class MainWindow extends JFrame {
 		configButtonBounds.width = 120;
 
 		// config save button
-		JButton saveButton = new JButton("Speichern");
+		JButton saveButton = new JButton(texts.getString("saveButton"));
 		saveButton.addActionListener((event) -> {
 			JFileChooser fileChooser = new JFileChooser("");
-			if (fileChooser.showSaveDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
+			if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 				File file = fileChooser.getSelectedFile();
 
 				try {
@@ -550,6 +553,7 @@ public class MainWindow extends JFrame {
 					config.save(file.getPath());
 				} catch (Exception ex) {
 					log.log(Level.SEVERE, "Failed to save configuration file.", ex);
+					// TODO Localize
 					showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
 
 					return;
@@ -560,54 +564,56 @@ public class MainWindow extends JFrame {
 		saveButton.setBounds(new Rectangle(265, 345, 110, 18));
 		configurationPanel.add(saveButton);
 
-		JPanel panel_2 = new JPanel();
-		panel_2.setBorder(new TitledBorder(null, "Neuer Master", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_2.setBounds(174, 22, 183, 92);
-		configurationPanel.add(panel_2);
-		panel_2.setLayout(null);
+		JPanel masterPanel = new JPanel();
+		masterPanel.setBorder(new TitledBorder(null, texts.getString("masterPanel"), TitledBorder.LEADING,
+				TitledBorder.TOP, null, null));
+		masterPanel.setBounds(174, 22, 183, 92);
+		configurationPanel.add(masterPanel);
+		masterPanel.setLayout(null);
 
 		// master name field
 		masterIP = new JTextField();
 		masterIP.setBounds(12, 20, 159, 18);
-		panel_2.add(masterIP);
+		masterPanel.add(masterIP);
 
 		// master add button
-		JButton masterAdd = new JButton("Hinzufügen");
+		JButton masterAdd = new JButton(texts.getString("masterAdd"));
 		masterAdd.setBounds(12, 42, 159, 18);
-		panel_2.add(masterAdd);
+		masterPanel.add(masterAdd);
 
 		// master remove button
-		JButton masterRemove = new JButton("Löschen");
+		JButton masterRemove = new JButton(texts.getString("masterRemove"));
 		masterRemove.setBounds(12, 64, 159, 18);
-		panel_2.add(masterRemove);
+		masterPanel.add(masterRemove);
 
 		// serial invert
-		invert = new JCheckBox("Invertieren");
+		invert = new JCheckBox(texts.getString("invert"));
 		invert.setBounds(174, 268, 141, 18);
 		configurationPanel.add(invert);
 
-		JPanel panel = new JPanel();
-		panel.setBorder(new TitledBorder(null, "PTT-Steuerung", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel.setBounds(174, 126, 440, 130);
-		configurationPanel.add(panel);
-		panel.setLayout(null);
+		JPanel pttPanel = new JPanel();
+		pttPanel.setBorder(new TitledBorder(null, texts.getString("pttPanel"), TitledBorder.LEADING, TitledBorder.TOP,
+				null, null));
+		pttPanel.setBounds(174, 126, 440, 130);
+		configurationPanel.add(pttPanel);
+		pttPanel.setLayout(null);
 
-		panel_serial = new JPanel();
-		panel_serial.setBounds(12, 20, 183, 100);
-		panel.add(panel_serial);
-		panel_serial.setBorder(
-				new TitledBorder(null, "Serieller Port", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_serial.setLayout(null);
+		serialPanel = new JPanel();
+		serialPanel.setBounds(12, 20, 183, 100);
+		pttPanel.add(serialPanel);
+		serialPanel.setBorder(new TitledBorder(null, texts.getString("serialPanel"), TitledBorder.LEADING,
+				TitledBorder.TOP, null, null));
+		serialPanel.setLayout(null);
 
 		// serial port
 		serialPortList = new JComboBox<>();
 		serialPortList.setBounds(12, 20, 151, 18);
-		panel_serial.add(serialPortList);
+		serialPanel.add(serialPortList);
 
 		// serial pin
 		serialPin = new JComboBox<>();
 		serialPin.setBounds(12, 42, 151, 18);
-		panel_serial.add(serialPin);
+		serialPanel.add(serialPin);
 		serialPin.addItem("DTR"); // index 0 = SerialPortComm.DTR
 		serialPin.addItem("RTS");
 
@@ -615,36 +621,36 @@ public class MainWindow extends JFrame {
 		radioUseSerial.setSelected(true);
 		radioUseSerial.setBounds(154, 69, 21, 23);
 		radioUseSerial.setEnabled(false);
-		panel_serial.add(radioUseSerial);
+		serialPanel.add(radioUseSerial);
 
-		panel_gpio = new JPanel();
-		panel_gpio.setBounds(201, 20, 227, 100);
-		panel.add(panel_gpio);
-		panel_gpio.setBorder(
-				new TitledBorder(null, "GPIO-Pin (RasPi)", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_gpio.setLayout(null);
-		panel_gpio.setEnabled(false);
+		gpioPanel = new JPanel();
+		gpioPanel.setBounds(201, 20, 227, 100);
+		pttPanel.add(gpioPanel);
+		gpioPanel.setBorder(new TitledBorder(null, texts.getString("gpioPanel"), TitledBorder.LEADING, TitledBorder.TOP,
+				null, null));
+		gpioPanel.setLayout(null);
+		gpioPanel.setEnabled(false);
 
 		raspiList = new JComboBox();
 		raspiList.setBounds(12, 20, 203, 18);
-		panel_gpio.add(raspiList);
-		raspiList.addItem("Deaktiviert");
+		gpioPanel.add(raspiList);
+		raspiList.addItem(texts.getString("itemDeactivated"));
 		raspiList.setEnabled(false);
 
 		gpioList = new JComboBox();
 		gpioList.setBounds(12, 42, 203, 18);
-		panel_gpio.add(gpioList);
-		gpioList.addItem("Deaktiviert");
+		gpioPanel.add(gpioList);
+		gpioList.addItem(texts.getString("itemDeactivated"));
 		gpioList.setEnabled(false);
 
-		btnGpiopins = new JButton("GPIO-Pins");
-		btnGpiopins.setBounds(12, 70, 115, 18);
-		panel_gpio.add(btnGpiopins);
-		btnGpiopins.setEnabled(false);
+		btnGpioPins = new JButton(texts.getString("btnGpioPins"));
+		btnGpioPins.setBounds(12, 70, 115, 18);
+		gpioPanel.add(btnGpioPins);
+		btnGpioPins.setEnabled(false);
 
 		radioUseGpio = new JRadioButton("");
 		radioUseGpio.setBounds(194, 69, 21, 23);
-		panel_gpio.add(radioUseGpio);
+		gpioPanel.add(radioUseGpio);
 		radioUseGpio.setEnabled(true);
 
 		radioUseGpio.addActionListener(new ActionListener() {
@@ -654,18 +660,18 @@ public class MainWindow extends JFrame {
 					radioUseGpio.setEnabled(false);
 					radioUseSerial.setEnabled(true);
 					radioUseSerial.setSelected(false);
-					panel_gpio.setEnabled(true);
-					panel_serial.setEnabled(false);
+					gpioPanel.setEnabled(true);
+					serialPanel.setEnabled(false);
 					raspiList.setEnabled(true);
 					gpioList.setEnabled(true);
-					btnGpiopins.setEnabled(true);
+					btnGpioPins.setEnabled(true);
 
 					serialPortList.setEnabled(false);
 					serialPin.setEnabled(false);
 				}
 			}
 		});
-		btnGpiopins.addActionListener(new ActionListener() {
+		btnGpioPins.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				EventQueue.invokeLater(new Runnable() {
 					public void run() {
@@ -683,7 +689,7 @@ public class MainWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				gpioList.removeAllItems();
-				gpioList.addItem("Deaktiviert");
+				gpioList.addItem(texts.getString("itemDeactivated"));
 
 				if (!(raspiList.getSelectedItem() instanceof BoardType))
 					return;
@@ -701,14 +707,14 @@ public class MainWindow extends JFrame {
 					radioUseSerial.setEnabled(false);
 					radioUseGpio.setEnabled(true);
 					radioUseGpio.setSelected(false);
-					panel_serial.setEnabled(true);
-					panel_gpio.setEnabled(false);
+					serialPanel.setEnabled(true);
+					gpioPanel.setEnabled(false);
 					serialPortList.setEnabled(true);
 					serialPin.setEnabled(true);
 
 					raspiList.setEnabled(false);
 					gpioList.setEnabled(false);
-					btnGpiopins.setEnabled(false);
+					btnGpioPins.setEnabled(false);
 				}
 			}
 		});
@@ -729,6 +735,7 @@ public class MainWindow extends JFrame {
 				// check if there is a selection
 				if (masterList.getSelectedItem() != null) {
 					// ask to remove
+					// TODO localize
 					if (showConfirm("Master loeschen", "Soll der ausgewaehlt Master wirklich geloescht werden?")) {
 						// remove master
 						masterList.remove(masterList.getSelectedIndex());
@@ -757,7 +764,7 @@ public class MainWindow extends JFrame {
 				// check if master is already in list
 				for (int i = 0; i < masters.length; i++) {
 					if (masters[i].equals(master)) {
-
+						// TODO localize
 						showError("Master hinzufuegen", "Master ist bereits in der Liste vorhanden!");
 						return;
 
@@ -782,17 +789,12 @@ public class MainWindow extends JFrame {
 		// create tray icon
 		Image trayImage = Toolkit.getDefaultToolkit().getImage("icon.ico");
 
-		PopupMenu trayMenu = new PopupMenu("FunkrufSlave");
-		MenuItem menuItem = new MenuItem("Anzeigen");
-		menuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// show window
-				setExtendedState(Frame.NORMAL);
-				setVisible(true);
-			}
-
+		// TODO localize
+		PopupMenu trayMenu = new PopupMenu(texts.getString("trayMenu"));
+		MenuItem menuItem = new MenuItem(texts.getString("trayMenuShow"));
+		menuItem.addActionListener((e) -> {
+			setExtendedState(Frame.NORMAL);
+			setVisible(true);
 		});
 		trayMenu.add(menuItem);
 
@@ -806,13 +808,18 @@ public class MainWindow extends JFrame {
 	}
 
 	// set connection status
-	public void setStatus(boolean status) {
-		this.statusDisplay.setText(status ? "verbunden" : "getrennt");
+	public void setStatus(boolean connected) {
+		if (connected) {
+			statusDisplay.setText(texts.getString("statusDisplayCon"));
+		} else {
+			statusDisplay.setText(texts.getString("statusDisplayDis"));
+		}
 	}
 
 	// run search
 	public void runSearch(boolean run) {
-		if (searchAddress.getText().equals("")) {
+		if (searchAddress.getText().isEmpty()) {
+			// TODO localize
 			showError("Suchlauf - Fehler",
 					"Damit der Suchlauf funktioniert, muss eine Skyper-Adresse eingegeben werden!");
 			return;
@@ -820,6 +827,7 @@ public class MainWindow extends JFrame {
 
 		if (run) {
 			if (Main.server != null) {
+				// TODO localize
 				if (!showConfirm("Suchlauf",
 						"Um einen Suchlauf durchzufuehren, darf der Server nicht laufen. Wollen Sie den Server jetzt beenden?")) {
 					return;
@@ -872,6 +880,7 @@ public class MainWindow extends JFrame {
 		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
 
 		if (Main.running) {
+			// TODO localize
 			if (showConfirm("Config uebernehmen",
 					"Der Server laeuft bereits. Um die Einstellungen zu uebernehmen, muss der Server neugestartet werden. Soll er jetzt neugestartet werden?")) {
 				Main.stopServer(false);
@@ -899,7 +908,7 @@ public class MainWindow extends JFrame {
 
 		// load raspi / gpio
 		gpioList.removeAllItems();
-		gpioList.addItem("Deaktiviert");
+		gpioList.addItem(texts.getString("itemDeactivated"));
 
 		invert.setSelected(config.getBoolean(ConfigKeys.INVERT, false));
 
@@ -908,24 +917,24 @@ public class MainWindow extends JFrame {
 			radioUseSerial.setEnabled(false);
 			radioUseGpio.setEnabled(true);
 			radioUseGpio.setSelected(false);
-			panel_serial.setEnabled(true);
-			panel_gpio.setEnabled(false);
+			serialPanel.setEnabled(true);
+			gpioPanel.setEnabled(false);
 			serialPortList.setEnabled(true);
 			serialPin.setEnabled(true);
 
 			raspiList.setEnabled(false);
 			gpioList.setEnabled(false);
-			btnGpiopins.setEnabled(false);
+			btnGpioPins.setEnabled(false);
 		} else {
 			radioUseGpio.setSelected(true);
 			radioUseGpio.setEnabled(false);
 			radioUseSerial.setEnabled(true);
 			radioUseSerial.setSelected(false);
-			panel_gpio.setEnabled(true);
-			panel_serial.setEnabled(false);
+			gpioPanel.setEnabled(true);
+			serialPanel.setEnabled(false);
 			raspiList.setEnabled(true);
 			gpioList.setEnabled(true);
-			btnGpiopins.setEnabled(true);
+			btnGpioPins.setEnabled(true);
 
 			serialPortList.setEnabled(false);
 			serialPin.setEnabled(false);
@@ -956,7 +965,7 @@ public class MainWindow extends JFrame {
 
 	// reset buttons
 	public void resetButtons() {
-		startButton.setText("Server starten");
+		startButton.setText(texts.getString("startButtonStart"));
 
 		searchStart.setEnabled(true);
 		searchStop.setEnabled(false);
@@ -981,8 +990,8 @@ public class MainWindow extends JFrame {
 	}
 
 	public String getStepWidth() {
-		if (searchStepWidth.getText().equals("")) {
-			searchStepWidth.setText("" + Main.searchStepSize);
+		if (searchStepWidth.getText().isEmpty()) {
+			searchStepWidth.setText(Float.toString(Main.searchStepSize));
 		}
 
 		return searchStepWidth.getText();

@@ -26,7 +26,7 @@ public final class Main {
 	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
 	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 	public static ThreadWrapper<FunkrufServer> server;
-	public static MainWindow mainWindow;
+	private static MainWindow mainWindow;
 	private static boolean showGui = true;
 	public static boolean running = false;
 
@@ -59,7 +59,7 @@ public final class Main {
 		}
 
 		if (line.hasOption('v')) {
-			// TODO impl show version
+			printVersion();
 			return false;
 		}
 
@@ -246,7 +246,7 @@ public final class Main {
 		return s;
 	}
 
-	public static void main(String[] args) {
+	private static void initRxTx() {
 		// to prevent rxtx to write to console
 		PrintStream out = System.out;
 		System.setOut(new PrintStream(new OutputStream() {
@@ -254,16 +254,25 @@ public final class Main {
 			public void write(int b) throws IOException {
 			}
 		}));
+
 		try {
 			Class.forName("gnu.io.RXTXCommDriver");
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE, "Failed to load RXTX.", e);
 		}
-		System.setOut(out);
 
-		// write name, version and authors
-		System.out.println("FunkrufSlave - Version " + VERSION
-				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at https://github.com/dh3wr/SDRPager/releases\n");
+		System.setOut(out);
+	}
+
+	private static void printVersion() {
+		System.out.println("FunkrufSlave - Version " + VERSION);
+		System.out.println("by Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen");
+		System.out.println("New Versions at https://github.com/dh3wr/SDRPager/releases");
+		System.out.println();
+	}
+
+	public static void main(String[] args) {
+		initRxTx();
 
 		if (!parseArguments(args)) {
 			return;
