@@ -30,7 +30,7 @@ master=127.0.0.1
 # Correctionfactor
 correction=0.35
 
-# Serial: Port, Pin
+# Serial: Port, Pin. If no Serial Port output is desired, change to serial = - DTR
 serial=/dev/ttyS0 DTR
 
 # GPIO-Pin: RasPi-Type / GPIO-Pin
