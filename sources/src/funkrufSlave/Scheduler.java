@@ -61,12 +61,12 @@ public class Scheduler extends TimerTask {
 		if (!Main.timeSlots.isLastSlot(slot)) {
 			// draw all slots
 			Main.drawSlots();
-			log("Scheduler: Updateing GUI, now slot" + slot, Log.INFO);
+			log("Scheduler: Updating GUI, now slot " + slot, Log.INFO);
 		}
 
 		switch (currentState) {
 			case WAITING_FOR_NEXT_SLOT_TO_BE_ACTIVE:
-				if (Main.timeSlots.nextSlotIsActive(this.time) && !Main.messageQueue.isEmpty()) {
+				if (Main.timeSlots.nextSlotIsActive(this.time) && (!Main.messageQueue.isEmpty())) {
 /*					// Get time left until next active slot will start
 					int time_left_100ms = 0;
 					// As long as the time_left_100ms is NOT enough to reach next time slot...
@@ -85,6 +85,15 @@ public class Scheduler extends TimerTask {
 					// Check it now its time to encode?
 					if (time_left_100ms <= MAXENCODETIME_100ms) {
 */
+
+					if (!Main.messageQueue.isEmpty())
+					{
+						log("Scheduler: messageQueue is not empty", Log.INFO);
+					} else
+					{
+						log("Scheduler: messageQueue is empty", Log.INFO);
+					}
+
 					slot = Main.timeSlots.getCurrentSlot(time);
 					// get count of active slots
 					int slotCount = Main.timeSlots.checkSlot(slot);
@@ -129,7 +138,7 @@ public class Scheduler extends TimerTask {
 				TxDelay_ms -= TIMERCYCLE_MS;
 				// If TXdelay is over...
 				if (TxDelay_ms <= 0) {
-					log("Scheduler: TX is over, play started", Log.INFO);
+					log("Scheduler: TX delay is over, play started", Log.INFO);
 
 					// play sound in new thread
 					AudioEncoder.play(soundData, this);
