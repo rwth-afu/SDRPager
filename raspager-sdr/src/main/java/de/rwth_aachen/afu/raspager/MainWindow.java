@@ -92,11 +92,12 @@ public class MainWindow extends JFrame {
 	private JButton searchStop;
 	private JTextField searchAddress;
 
-	private final ConfigWrapper config;
+	private final Configuration config;
 	private final SDRTransmitter transmitter;
+	private TimeSlots timeSlots = null;
 
 	// constructor
-	public MainWindow(ConfigWrapper config, SDRTransmitter transmitter) {
+	public MainWindow(Configuration config, SDRTransmitter transmitter) {
 		this.config = config;
 		this.transmitter = transmitter;
 
@@ -107,7 +108,6 @@ public class MainWindow extends JFrame {
 
 		// window listener
 		addWindowListener(new WindowListener() {
-
 			@Override
 			public void windowActivated(WindowEvent arg0) {
 			}
@@ -152,7 +152,6 @@ public class MainWindow extends JFrame {
 			@Override
 			public void windowOpened(WindowEvent arg0) {
 			}
-
 		});
 
 		// main panel
@@ -198,14 +197,9 @@ public class MainWindow extends JFrame {
 		// correction slider
 		correctionSlider = new JSlider(SwingConstants.VERTICAL, -100, 100, 0);
 		correctionSlider.setBounds(correctionSliderBounds);
-		correctionSlider.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				// set correction
-				correctionActual.setText(String.format("%+5.2f", correctionSlider.getValue() / 100.));
-				transmitter.setCorrection(correctionSlider.getValue() / 100.0f);
-			}
+		correctionSlider.addChangeListener((e) -> {
+			correctionActual.setText(String.format("%+5.2f", correctionSlider.getValue() / 100.));
+			transmitter.setCorrection(correctionSlider.getValue() / 100.0f);
 		});
 		main.add(correctionSlider);
 
@@ -217,13 +211,8 @@ public class MainWindow extends JFrame {
 		// search run start
 		searchStart = new JButton("Start");
 		searchStart.setBounds(200, 434, 70, 18);
-		searchStart.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				// run search
-				runSearch(true);
-			}
+		searchStart.addActionListener((e) -> {
+			runSearch(true);
 		});
 		main.add(searchStart);
 
@@ -231,13 +220,8 @@ public class MainWindow extends JFrame {
 		searchStop = new JButton("Stop");
 		searchStop.setBounds(275, 434, 70, 18);
 		searchStop.setEnabled(false);
-		searchStop.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				// stop searching
-				Main.stopSearching();
-			}
+		searchStop.addActionListener((e) -> {
+			Main.stopSearching();
 		});
 		main.add(searchStop);
 
@@ -253,14 +237,10 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void keyTyped(KeyEvent event) {
-
 				char key = event.getKeyChar();
-
-				// if key is not between 0 and 9 or is dot
 				if ((key > '9' || key < '0') && key != '.') {
 					event.consume();
 				}
-
 			}
 
 			@Override
@@ -285,14 +265,10 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void keyTyped(KeyEvent event) {
-
 				char key = event.getKeyChar();
-
-				// if key is not between 0 and 9
 				if ((key > '9' || key < '0')) {
 					event.consume();
 				}
-
 			}
 
 			@Override
@@ -315,7 +291,6 @@ public class MainWindow extends JFrame {
 
 		// slot display
 		slotDisplay = new Canvas() {
-
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -336,7 +311,7 @@ public class MainWindow extends JFrame {
 					Color color = g.getColor();
 
 					// if this is allowed slot
-					if (Main.timeSlots.getSlot(i)) {
+					if (timeSlots.getSlot(i)) {
 						// change font and color
 						g.setFont(new Font(font.getFontName(), Font.BOLD, font.getSize()));
 						g.setColor(Color.green);
@@ -354,31 +329,33 @@ public class MainWindow extends JFrame {
 				}
 
 				// if scheduler does not exist, function ends here
-				if (Main.scheduler == null) {
-					return;
-				}
+				// TODO fix
+				// if (state.scheduler == null) {
+				// return;
+				// }
+				return;
 
-				Color color = g.getColor();
-				g.setColor(Color.green);
-
-				// get slot count
-				int slot = TimeSlots.getSlotIndex(Main.scheduler.getTime());
-				int slotCount = Main.timeSlots.checkSlot(String.format("%1x", slot).charAt(0));
-
-				// draw current slots (from slot to slot + slotCount) with
-				// different color
-				for (int i = 0; i < slotCount; i++) {
-					g.fillRect(x + 1, (slot + i) * step + 1, width - x - 1, step - 1);
-				}
-
-				g.setColor(Color.yellow);
-
-				g.fillRect(x + 1, slot * step + 1, width - x - 1, step - 1);
-
-				g.setColor(color);
-
+				// Color color = g.getColor();
+				// g.setColor(Color.green);
+				//
+				// // get slot count
+				// int slot = TimeSlots.getSlotIndex(state.scheduler.getTime());
+				// int slotCount = timeSlots.getSlotCount(String.format("%1x",
+				// slot).charAt(0));
+				//
+				// // draw current slots (from slot to slot + slotCount) with
+				// // different color
+				// for (int i = 0; i < slotCount; i++) {
+				// g.fillRect(x + 1, (slot + i) * step + 1, width - x - 1, step
+				// - 1);
+				// }
+				//
+				// g.setColor(Color.yellow);
+				//
+				// g.fillRect(x + 1, slot * step + 1, width - x - 1, step - 1);
+				//
+				// g.setColor(color);
 			}
-
 		};
 		slotDisplay.setBounds(slotDisplayBounds);
 		main.add(slotDisplay);
@@ -402,27 +379,15 @@ public class MainWindow extends JFrame {
 
 		// server start button
 		startButton = new JButton("Server starten");
-		startButton.addActionListener(new ActionListener() {
+		startButton.addActionListener((e) -> {
+			if (Main.running) {
+				Main.stopServer(false);
+				startButton.setText("Server starten");
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				if (Main.running) {
-					// stop server
-
-					Main.stopServer(false);
-					startButton.setText("Server starten");
-
-				} else {
-					// start server
-
-					Main.startServer(false);
-					startButton.setText("Server stoppen");
-
-				}
-
+			} else {
+				Main.startServer(false);
+				startButton.setText("Server stoppen");
 			}
-
 		});
 		startButton.setBounds(new Rectangle(675, 10, 150, 18));
 		main.add(startButton);
@@ -538,14 +503,8 @@ public class MainWindow extends JFrame {
 
 		// config apply button
 		JButton applyButton = new JButton("Übernehmen");
-		applyButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// set the config
-				setConfig();
-			}
-
+		applyButton.addActionListener((e) -> {
+			setConfig();
 		});
 		applyButton.setBounds(new Rectangle(12, 345, 130, 18));
 		configurationPanel.add(applyButton);
@@ -555,37 +514,24 @@ public class MainWindow extends JFrame {
 
 		// config load button
 		JButton loadButton = new JButton("Laden");
-		loadButton.addActionListener(new ActionListener() {
+		loadButton.addActionListener((event) -> {
+			JFileChooser fileChooser = new JFileChooser("");
+			if (fileChooser.showOpenDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
+				File file = fileChooser.getSelectedFile();
 
-			@Override
-			public void actionPerformed(ActionEvent event) {
+				try {
+					config.load(file.getPath());
+				} catch (Exception e) {
+					log.log(Level.SEVERE, "Invalid configuration file.", e);
+					showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
 
-				// show open dialog
-				JFileChooser fileChooser = new JFileChooser("");
-				if (fileChooser.showOpenDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
-
-					// get file name
-					File file = fileChooser.getSelectedFile();
-
-					try {
-						// try to load config
-						config.getConfiguration().load(file.getPath());
-					} catch (Exception e) {
-						// catch errors
-						showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
-						log.log(Level.SEVERE, "Invalid configuration file.", e);
-
-						return;
-					}
-
-					// load config (means showing the config)
-					loadConfig();
-
+					return;
 				}
 
+				loadConfig();
 			}
-
 		});
+
 		loadButton.setBounds(new Rectangle(153, 345, 100, 18));
 		configurationPanel.add(loadButton);
 
@@ -594,30 +540,23 @@ public class MainWindow extends JFrame {
 
 		// config save button
 		JButton saveButton = new JButton("Speichern");
-		saveButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent event) {
-				// show save dialog
-				JFileChooser fileChooser = new JFileChooser("");
-				if (fileChooser.showSaveDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
+		saveButton.addActionListener((event) -> {
+			JFileChooser fileChooser = new JFileChooser("");
+			if (fileChooser.showSaveDialog(Main.mainWindow) == JFileChooser.APPROVE_OPTION) {
+				File file = fileChooser.getSelectedFile();
 
-					// get file name
-					File file = fileChooser.getSelectedFile();
+				try {
+					setConfig();
+					config.save(file.getPath());
+				} catch (Exception ex) {
+					log.log(Level.SEVERE, "Failed to save configuration file.", ex);
+					showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
 
-					try {
-						setConfig();
-						config.getConfiguration().save(file.getPath());
-					} catch (Exception ex) {
-						log.log(Level.SEVERE, "Failed to save configuration file.", ex);
-						showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
-
-						return;
-					}
-
+					return;
 				}
-
 			}
 		});
+
 		saveButton.setBounds(new Rectangle(265, 345, 110, 18));
 		configurationPanel.add(saveButton);
 
@@ -909,36 +848,28 @@ public class MainWindow extends JFrame {
 	}
 
 	public void setConfig() {
-		config.setPort(Integer.parseInt(port.getText()));
-		config.setMasters(masterList.getItems());
+		config.setInt(ConfigKeys.NET_PORT, Integer.parseInt(port.getText()));
+		config.setString(ConfigKeys.NET_MASTERS, String.join(" ", masterList.getItems()));
 
-		// serial port config
 		if (!radioUseSerial.isSelected()) {
-			config.setUseSerial(false);
+			config.setBoolean(ConfigKeys.SERIAL_USE, false);
 		} else {
-			config.setUseSerial(true);
-			config.setSerialPort(serialPortList.getSelectedItem().toString());
-			config.setSerialPin(serialPin.getSelectedItem().toString());
+			config.setBoolean(ConfigKeys.SERIAL_USE, true);
+			config.setString(ConfigKeys.SERIAL_PORT, serialPortList.getSelectedItem().toString());
+			config.setString(ConfigKeys.SERIAL_PIN, serialPin.getSelectedItem().toString());
 		}
 
-		// set RasPi
 		if (!radioUseGpio.isSelected()) {
-			config.setRaspiRev(null);
-			config.setUseGpio(false);
-			config.setGpioPin(null);
+			config.setBoolean(ConfigKeys.GPIO_USE, false);
 		} else {
-			config.setUseGpio(true);
-			config.setGpioPin(gpioList.getSelectedItem().toString());
-			config.setRaspiRev(raspiList.getSelectedItem().toString());
+			config.setBoolean(ConfigKeys.GPIO_USE, true);
+			config.setString(ConfigKeys.GPIO_PIN, gpioList.getSelectedItem().toString());
+			config.setString(ConfigKeys.GPIO_RASPI_REV, raspiList.getSelectedItem().toString());
 		}
 
-		config.setInvert(invert.isSelected());
-		config.setDelay(Integer.parseInt(delay.getText()));
-		config.setSoundDevice(soundDeviceList.getSelectedItem().toString());
-
-		// set sound device
-		// Main.config.setSoundDevice((Mixer.Info)
-		// this.soundDeviceList.getSelectedItem());
+		config.setBoolean(ConfigKeys.INVERT, invert.isSelected());
+		config.setInt(ConfigKeys.TX_DELAY, Integer.parseInt(delay.getText()));
+		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
 
 		if (Main.running) {
 			if (showConfirm("Config uebernehmen",
@@ -952,27 +883,27 @@ public class MainWindow extends JFrame {
 	}
 
 	public void loadConfig() {
-		port.setText(Integer.toString(config.getPort()));
+		port.setText(Integer.toString(config.getInt(ConfigKeys.NET_PORT, 1337)));
 
 		// load masters
 		masterList.removeAll();
-		String[] masters = config.getMasters();
-		if (masters != null) {
-			Arrays.stream(config.getMasters()).forEach((m) -> masterList.add(m));
+		String value = config.getString(ConfigKeys.NET_MASTERS);
+		if (value != null && !value.isEmpty()) {
+			Arrays.stream(value.split(" +")).forEach((m) -> masterList.add(m));
 		}
 
 		// load serial
-		serialPortList.setSelectedItem(config.getSerialPort());
-		serialPin.setSelectedItem(config.getSerialPin());
-		delay.setText(Integer.toString(config.getDelay()));
+		serialPortList.setSelectedItem(config.getString(ConfigKeys.SERIAL_PORT));
+		serialPin.setSelectedItem(config.getString(ConfigKeys.SERIAL_PIN));
+		delay.setText(Integer.toString(config.getInt(ConfigKeys.TX_DELAY, 0)));
 
 		// load raspi / gpio
 		gpioList.removeAllItems();
 		gpioList.addItem("Deaktiviert");
 
-		invert.setSelected(config.getInvert());
+		invert.setSelected(config.getBoolean(ConfigKeys.INVERT, false));
 
-		if (config.useSerial()) {
+		if (config.getBoolean(ConfigKeys.SERIAL_USE, false)) {
 			radioUseSerial.setSelected(true);
 			radioUseSerial.setEnabled(false);
 			radioUseGpio.setEnabled(true);
@@ -1000,16 +931,17 @@ public class MainWindow extends JFrame {
 			serialPin.setEnabled(false);
 		}
 
-		if (config.getRaspiRev() != null) {
-			raspiList.setSelectedItem(config.getRaspiRev());
+		value = config.getString(ConfigKeys.GPIO_RASPI_REV);
+		if (value != null) {
+			raspiList.setSelectedItem(value);
 			// TODO impl
 			// for (Pin p : RaspiPin.allPins(Main.config.getRaspi())) {
 			// gpioList.addItem(p);
 			// }
-			gpioList.setSelectedItem(config.getGpioPin());
+			gpioList.setSelectedItem(config.getString(ConfigKeys.GPIO_PIN));
 		}
 
-		soundDeviceList.setSelectedItem(config.getSoundDevice());
+		soundDeviceList.setSelectedItem(config.getString(ConfigKeys.SDR_DEVICE));
 
 		updateCorrection();
 	}
@@ -1043,7 +975,8 @@ public class MainWindow extends JFrame {
 		return JOptionPane.showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
 	}
 
-	public void drawSlots() {
+	public void updateTimeSlots(TimeSlots slots) {
+		this.timeSlots = slots;
 		slotDisplay.repaint();
 	}
 

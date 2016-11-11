@@ -23,21 +23,18 @@ public final class Main {
 	private static final String VERSION = "1.4.0";
 
 	// TODO Get rid of all these static global vars
+	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
+	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 	public static ThreadWrapper<FunkrufServer> server;
-	private static Deque<Message> messageQueue;
-	public static Scheduler scheduler;
-	public static TimeSlots timeSlots;
-	private static SDRTransmitter transmitter = new SDRTransmitter();
 	public static MainWindow mainWindow;
 	private static boolean showGui = true;
 	public static boolean running = false;
 
-	public static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
-	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
-
 	private static final Configuration config = new Configuration();
-
 	private static final Timer timer = new Timer();
+	private static final Deque<Message> messages = new ConcurrentLinkedDeque<>();
+	private static final SDRTransmitter transmitter = new SDRTransmitter();
+	private static Scheduler scheduler;
 
 	private static boolean parseArguments(String[] args) {
 		Options opts = new Options();
@@ -51,25 +48,23 @@ public final class Main {
 		try {
 			line = parser.parse(opts, args);
 		} catch (ParseException ex) {
-			ex.printStackTrace();
+			log.log(Level.SEVERE, "Failed to parse command line.", ex);
 			return false;
 		}
 
-		// Show help
 		if (line.hasOption('h')) {
 			HelpFormatter fmt = new HelpFormatter();
 			fmt.printHelp("raspager-sdr", opts);
 			return false;
 		}
 
-		// Show version
 		if (line.hasOption('v')) {
-			// TODO impl
+			// TODO impl show version
 			return false;
 		}
 
-		// Start as a service
 		if (line.hasOption('s')) {
+			// Start as a service
 			showGui = false;
 		}
 
@@ -77,7 +72,7 @@ public final class Main {
 			String fileName = line.getOptionValue('c', "raspager.properties");
 			config.load(fileName);
 		} catch (Throwable ex) {
-			ex.printStackTrace();
+			log.log(Level.SEVERE, "Failed to load configuration file.", ex);
 			return false;
 		}
 
@@ -97,9 +92,13 @@ public final class Main {
 		}
 
 		if (searching) {
-			scheduler = new SearchScheduler(config, transmitter, messageQueue);
+			scheduler = new SearchScheduler(config, messages, transmitter);
 		} else {
-			scheduler = new Scheduler(config, transmitter, messageQueue);
+			scheduler = new Scheduler(messages, transmitter);
+		}
+
+		if (mainWindow != null) {
+			scheduler.setUpdateTimeSlotsHandler(mainWindow::updateTimeSlots);
 		}
 
 		timer.schedule(scheduler, 100, 100);
@@ -121,14 +120,15 @@ public final class Main {
 	}
 
 	public static void startServer(boolean join) {
-		if (messageQueue == null) {
-			// initialize messageQueue
-			messageQueue = new ConcurrentLinkedDeque<>();
-		}
-
 		if (server == null) {
-			// initialize server thread
-			server = new ThreadWrapper<FunkrufServer>(new FunkrufServer(config.getInt("port"), messageQueue));
+			FunkrufServer srv = new FunkrufServer(config);
+			// Register event handlers
+			srv.setAddMessageHandler(messages::push);
+			srv.setGetTimeHandler(scheduler::getTime);
+			srv.setTimeCorrectionHandler(scheduler::correctTime);
+			srv.setTimeSlotsHandler(scheduler::setTimeSlots);
+			// Create new server thread
+			server = new ThreadWrapper<FunkrufServer>(srv);
 		}
 
 		// start scheduler (not searching)
@@ -177,9 +177,7 @@ public final class Main {
 		// stop scheduler
 		stopScheduler();
 
-		if (messageQueue != null) {
-			messageQueue = null;
-		}
+		messages.clear();
 
 		log.info("Server stopped.");
 
@@ -201,13 +199,6 @@ public final class Main {
 			// show error and reset start button
 			mainWindow.showError("Server Error", message);
 			mainWindow.resetButtons();
-
-		}
-	}
-
-	public static void drawSlots() {
-		if (mainWindow != null) {
-			mainWindow.drawSlots();
 		}
 	}
 
@@ -274,23 +265,16 @@ public final class Main {
 		System.out.println("FunkrufSlave - Version " + VERSION
 				+ "\nby Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen\nNew Versions at https://github.com/dh3wr/SDRPager/releases\n");
 
-		// parse arguments
 		if (!parseArguments(args)) {
 			return;
 		}
 
-		// initialize
-		timeSlots = new TimeSlots();
-
-		// set running to false
 		running = false;
 
-		// if gui
 		if (showGui) {
-			// create mainWindow
-			mainWindow = new MainWindow(new ConfigWrapper(config), transmitter);
+			// TODO fix
+			mainWindow = new MainWindow(null, transmitter);
 		} else {
-			// if no gui, start server and join
 			startServer(true);
 		}
 

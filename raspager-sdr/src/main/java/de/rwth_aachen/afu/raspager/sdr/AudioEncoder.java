@@ -1,8 +1,6 @@
 package de.rwth_aachen.afu.raspager.sdr;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -11,7 +9,6 @@ import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.Mixer;
 
 final class AudioEncoder {
-	private static final Logger log = Logger.getLogger(AudioEncoder.class.getName());
 	// 0-2 = begin, 4-36 = constant, 38-39 = end
 	private static final AudioFormat af48000 = new AudioFormat(48000, 16, 1, true, false);
 	private static final float[] bitChange = { -0.9f, -0.7f, 0.0f, 0.7f, 0.9f };
@@ -40,9 +37,11 @@ final class AudioEncoder {
 		this.correction = correction;
 	}
 
-	public void play(byte[] inputData) {
-		byte[] soundData = encode(inputData, correction);
+	public byte[] encode(List<Integer> data) {
+		return encode(getByteData(data), correction);
+	}
 
+	public void play(byte[] rawData) throws Exception {
 		try (Clip c = AudioSystem.getClip(device)) {
 			/*
 			 * // === DOWNSAMPLING AUF 44100 Hz ===
@@ -60,7 +59,7 @@ final class AudioEncoder {
 			 */
 
 			// auskommentieren, falls Downsampling verwendet werden soll
-			c.open(af48000, soundData, 0, soundData.length);
+			c.open(af48000, rawData, 0, rawData.length);
 			c.addLineListener((e) -> {
 				if (e.getType() == LineEvent.Type.STOP) {
 					c.close();
@@ -70,17 +69,7 @@ final class AudioEncoder {
 
 			c.start();
 			c.loop(0);
-		} catch (Exception ex) {
-			log.log(Level.SEVERE, "Failed to play audio stream.", ex);
 		}
-	}
-
-	public void play(int[] inputData) {
-		play(getByteData(inputData));
-	}
-
-	public void play(List<Integer> inputData) {
-		play(getByteData(inputData));
 	}
 
 	private static byte[] encode(byte[] inputData, float correction) {
@@ -196,18 +185,6 @@ final class AudioEncoder {
 		}
 
 		return data;
-	}
-
-	private static byte[] getByteData(int[] data) {
-		byte[] byteData = new byte[data.length * 4];
-
-		for (int i = 0; i < data.length; i++) {
-			for (int c = 0; c < 4; c++) {
-				byteData[i * 4 + c] = (byte) (data[i] >>> (8 * (3 - c)));
-			}
-		}
-
-		return byteData;
 	}
 
 	private static byte[] getByteData(List<Integer> data) {

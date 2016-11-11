@@ -24,21 +24,32 @@ final class TimeSlots {
 	}
 
 	/**
-	 * Checks if slot is allowed and count how many active slots are in a row.
+	 * Checks if slot is allowed and counts how many active slots are in a row.
 	 * 
 	 * @param cs
 	 *            Slot to check.
 	 * @return Number of active slots.
 	 */
-	public synchronized int checkSlot(char cs) {
-		int idx = Character.digit(cs, 16);
+	public synchronized int getSlotCount(char cs) {
+		int c = getSlotCount(Character.digit(cs, 16));
+		lastSlot = cs;
+
+		return c;
+	}
+
+	/**
+	 * Checks if slot is allowed and counts how many active slots are in a row.
+	 * 
+	 * @param slot
+	 *            Slot to check.
+	 * @return Number of active slots.
+	 */
+	public synchronized int getSlotCount(int slot) {
 		int count = 0;
 
-		for (int i = idx; slots[i % 16] && i < idx + 16; ++i) {
+		for (int i = slot; slots[i % 16] && i < slot + 16; ++i) {
 			++count;
 		}
-
-		lastSlot = cs;
 
 		return count;
 	}
@@ -83,6 +94,17 @@ final class TimeSlots {
 	}
 
 	/**
+	 * Cheks if the next slot will be active.
+	 * 
+	 * @param time
+	 *            Time
+	 * @return True if the next slot will be active.
+	 */
+	public synchronized boolean isNextSlotActive(int time) {
+		return (getSlotCount(getCurrentSlot(time) + 1) % 16 > 0);
+	}
+
+	/**
 	 * Gets the current slot for the given time value.
 	 * 
 	 * @param time
@@ -103,8 +125,13 @@ final class TimeSlots {
 	public static int getSlotIndex(int time) {
 		// time (in 0.1s)
 		// time per slot 3.75s = 37.5 * 0.1s
-		// total 16 slots
-		return ((int) (time / 64.0)) % 16;
+		// total 16 slots, so % 16
+		// *** Very likely a bug ***
+		// return ((int) (time / 64.0)) % 16;
+
+		// One time slot has a length of 60 sec/16 slot = 3.75 s = 37.5 * 0.1 s
+		// % 16 to warp around complete minutes
+		return ((int) (time / 37.5)) % 16;
 	}
 
 }

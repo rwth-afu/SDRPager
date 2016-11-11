@@ -1,7 +1,5 @@
 package de.rwth_aachen.afu.raspager;
 
-import java.util.Deque;
-
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -18,13 +16,13 @@ final class FunkrufServerInitializer extends ChannelInitializer<SocketChannel> {
 	private final FunkrufServerHandler handler;
 	private final SslContext sslContext;
 
-	public FunkrufServerInitializer(Deque<Message> messageQueue) {
-		this(null, messageQueue);
+	public FunkrufServerInitializer(FunkrufServerCallbacks callbacks) {
+		this(null, callbacks);
 	}
 
-	public FunkrufServerInitializer(SslContext sslContext, Deque<Message> messageQueue) {
+	public FunkrufServerInitializer(SslContext sslContext, FunkrufServerCallbacks callbacks) {
 		this.sslContext = sslContext;
-		this.handler = new FunkrufServerHandler(messageQueue);
+		this.handler = new FunkrufServerHandler(callbacks);
 	}
 
 	@Override

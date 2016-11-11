@@ -13,6 +13,7 @@ public class SDRTransmitter implements Transmitter {
 	private AudioEncoder encoder;
 	private SerialPortComm serial;
 	private GpioPortComm gpio;
+	private int txDelay = 0;
 
 	@Override
 	public void close() throws Exception {
@@ -41,6 +42,8 @@ public class SDRTransmitter implements Transmitter {
 	public void init(Configuration config) throws Exception {
 		close();
 
+		txDelay = config.getInt("txDelay", 0);
+
 		if (config.getBoolean("serial.use", false)) {
 			serial = new SerialPortComm(config.getString("serial.port"), config.getInt("serial.pin"),
 					config.getBoolean("invert"));
@@ -61,7 +64,19 @@ public class SDRTransmitter implements Transmitter {
 		}
 
 		try {
+			byte[] enc = encoder.encode(data);
+
 			enable();
+
+			if (txDelay > 0) {
+				try {
+					Thread.sleep(txDelay);
+				} catch (Throwable t) {
+					log.log(Level.SEVERE, "Failed to wait for TX delay.", t);
+				}
+			}
+
+			encoder.play(enc);
 		} finally {
 			disable();
 		}

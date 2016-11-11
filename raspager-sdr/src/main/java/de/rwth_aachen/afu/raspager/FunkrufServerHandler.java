@@ -1,23 +1,20 @@
 package de.rwth_aachen.afu.raspager;
 
-import java.util.Deque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+@Sharable
 final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 
 	private static final Logger log = Logger.getLogger(FunkrufServerHandler.class.getName());
-	private final Deque<Message> messageQueue;
+	private final FunkrufServerCallbacks callbacks;
 
-	public FunkrufServerHandler(Deque<Message> messageQueue) {
-		if (messageQueue == null) {
-			throw new IllegalArgumentException("Invalid message queue.");
-		}
-
-		this.messageQueue = messageQueue;
+	public FunkrufServerHandler(FunkrufServerCallbacks callbacks) {
+		this.callbacks = callbacks;
 	}
 
 	@Override
@@ -79,8 +76,7 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 	 */
 	private void handleMessage(ChannelHandlerContext ctx, String request) {
 		try {
-			// Add message to our queue
-			messageQueue.push(new Message(request));
+			callbacks.addMessage(new Message(request));
 
 			// Send message ID as response
 			int messageId = Integer.parseInt(request.substring(1, 3), 16);
@@ -102,10 +98,8 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 	 */
 	private void handleMasterIdentify(ChannelHandlerContext ctx, String request) {
 		try {
+			int time = callbacks.getTime();
 			String[] parts = request.split(":", 2);
-			// TODO impl
-			int time = Main.scheduler.getTime();
-
 			String response = String.format("2:%s:%04x\r\n", parts[1], time);
 			ctx.write(response);
 			ackSuccess(ctx);
@@ -134,8 +128,7 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 				delay = Integer.parseInt(parts[1], 16);
 			}
 
-			// TODO impl
-			Main.scheduler.correctTime(delay);
+			callbacks.setTimeCorrection(delay);
 
 			ackSuccess(ctx);
 		} catch (Throwable t) {
@@ -155,8 +148,8 @@ final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
 	private void handleTimeSlots(ChannelHandlerContext ctx, String request) {
 		try {
 			String[] parts = request.split(":", 2);
-			// TODO impl
-			Main.timeSlots.setSlots(parts[1]);
+			callbacks.setTimeSlots(parts[1]);
+
 			ackSuccess(ctx);
 		} catch (Throwable t) {
 			log.log(Level.WARNING, "Failed to set time slots.", t);
