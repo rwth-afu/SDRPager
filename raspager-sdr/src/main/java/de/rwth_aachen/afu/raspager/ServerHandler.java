@@ -8,12 +8,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 @Sharable
-final class FunkrufServerHandler extends SimpleChannelInboundHandler<String> {
+final class ServerHandler extends SimpleChannelInboundHandler<String> {
 
-	private static final Logger log = Logger.getLogger(FunkrufServerHandler.class.getName());
-	private final FunkrufServerCallbacks callbacks;
+	private static final Logger log = Logger.getLogger(ServerHandler.class.getName());
+	private final ServerCallbacks callbacks;
 
-	public FunkrufServerHandler(FunkrufServerCallbacks callbacks) {
+	public ServerHandler(ServerCallbacks callbacks) {
 		this.callbacks = callbacks;
 	}
 

@@ -12,13 +12,13 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-final class FunkrufServer implements Runnable {
-	private static final Logger log = Logger.getLogger(FunkrufServer.class.getName());
+final class Server implements Runnable {
+	private static final Logger log = Logger.getLogger(Server.class.getName());
 	private final Configuration config;
-	private final FunkrufServerCallbacks callbacks = new FunkrufServerCallbacks();
+	private final ServerCallbacks callbacks = new ServerCallbacks();
 	private ChannelFuture serverFuture;
 
-	public FunkrufServer(Configuration config) {
+	public Server(Configuration config) {
 		this.config = config;
 	}
 
@@ -46,7 +46,7 @@ final class FunkrufServer implements Runnable {
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 		try {
-			FunkrufServerInitializer handler = new FunkrufServerInitializer(callbacks);
+			ServerInitializer handler = new ServerInitializer(callbacks);
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup);
 			b.channel(NioServerSocketChannel.class);

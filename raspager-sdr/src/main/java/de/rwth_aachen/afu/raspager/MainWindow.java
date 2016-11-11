@@ -93,7 +93,7 @@ public class MainWindow extends JFrame {
 
 	private final Configuration config;
 	private final SDRTransmitter transmitter;
-	private TimeSlots timeSlots = null;
+	private TimeSlots timeSlots = new TimeSlots();
 	private final ResourceBundle texts;
 
 	// constructor
@@ -122,18 +122,14 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent event) {
-				// if server is running, ask to quit
-				if (Main.running && !showConfirm(texts.getString("askQuitTitle"), texts.getString("askQuitText"))) {
+				if (Main.running && !showConfirmResource("askQuitTitle", "askQuitText")) {
 					return;
 				}
 
-				// if server is running
 				if (Main.running) {
-					// stop server
 					Main.stopServer(false);
 				}
 
-				// dispose window
 				dispose();
 			}
 
@@ -236,7 +232,6 @@ public class MainWindow extends JFrame {
 		searchStepWidth = new JTextField();
 		searchStepWidth.setBounds(new Rectangle(350, 434, 80, 18));
 		searchStepWidth.addKeyListener(new KeyListener() {
-
 			@Override
 			public void keyTyped(KeyEvent event) {
 				char key = event.getKeyChar();
@@ -264,7 +259,6 @@ public class MainWindow extends JFrame {
 		searchAddress = new JTextField();
 		searchAddress.setBounds(455, 434, 100, 18);
 		searchAddress.addKeyListener(new KeyListener() {
-
 			@Override
 			public void keyTyped(KeyEvent event) {
 				char key = event.getKeyChar();
@@ -362,9 +356,6 @@ public class MainWindow extends JFrame {
 		slotDisplay.setBounds(slotDisplayBounds);
 		main.add(slotDisplay);
 
-		// status display bounds
-		Rectangle statusDisplayBounds = new Rectangle(320, 10, 120, 18);
-
 		// status display label
 		JLabel statusDisplayLabel = new JLabel(texts.getString("statusDisplayLabel"));
 		statusDisplayLabel.setBounds(200, 10, 60, 18);
@@ -374,10 +365,6 @@ public class MainWindow extends JFrame {
 		statusDisplay = new JLabel(texts.getString("statusDisplayDis"));
 		statusDisplay.setBounds(new Rectangle(263, 10, 120, 18));
 		main.add(statusDisplay);
-
-		// server start button bounds
-		Rectangle startButtonBounds = new Rectangle(statusDisplayBounds.x + statusDisplayBounds.width + 20,
-				statusDisplayBounds.y, 150, 18);
 
 		// server start button
 		startButton = new JButton(texts.getString("startButtonStart"));
@@ -525,8 +512,7 @@ public class MainWindow extends JFrame {
 					config.load(file.getPath());
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "Invalid configuration file.", e);
-					// TODO localize
-					showError("Config laden", "Die Datei ist keine gueltige Config-Datei!");
+					showErrorResource("invalidConfigTitle", "invalidConfigText");
 
 					return;
 				}
@@ -553,8 +539,7 @@ public class MainWindow extends JFrame {
 					config.save(file.getPath());
 				} catch (Exception ex) {
 					log.log(Level.SEVERE, "Failed to save configuration file.", ex);
-					// TODO Localize
-					showError("Config speichern", "Die Datei konnte nicht gespeichert werden!");
+					showErrorResource("failedConfigTitle", "failedConfigText");
 
 					return;
 				}
@@ -729,55 +714,28 @@ public class MainWindow extends JFrame {
 			raspiList.addItem(bt);
 		}
 
-		masterRemove.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// check if there is a selection
-				if (masterList.getSelectedItem() != null) {
-					// ask to remove
-					// TODO localize
-					if (showConfirm("Master loeschen", "Soll der ausgewaehlt Master wirklich geloescht werden?")) {
-						// remove master
-						masterList.remove(masterList.getSelectedIndex());
-					}
-				}
-
+		masterRemove.addActionListener((e) -> {
+			if (masterList.getSelectedItem() != null && showConfirmResource("delMasterTitle", "delMasterText")) {
+				masterList.remove(masterList.getSelectedIndex());
 			}
 		});
 
-		// serial port bounds
-		Rectangle serialPortBounds = new Rectangle(masterAdd.getX(),
-				masterRemove.getY() + masterRemove.getHeight() + 40, 100, 18);
-		masterAdd.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-
-				String master = masterIP.getText();
-				String[] masters = masterList.getItems();
-
-				// is textfield empty?
-				if (master.equals("")) {
-					return;
-				}
-
-				// check if master is already in list
-				for (int i = 0; i < masters.length; i++) {
-					if (masters[i].equals(master)) {
-						// TODO localize
-						showError("Master hinzufuegen", "Master ist bereits in der Liste vorhanden!");
-						return;
-
-					}
-				}
-
-				// add master
-				masterList.add(master);
-				// clear textfield
-				masterIP.setText("");
-
+		masterAdd.addActionListener((e) -> {
+			String master = masterIP.getText();
+			if (master.isEmpty()) {
+				return;
 			}
 
+			// check if master is already in list
+			for (String m : masterList.getItems()) {
+				if (m.equalsIgnoreCase(master)) {
+					showErrorResource("addMasterFailTitle", "addMasterFailText");
+					return;
+				}
+			}
+
+			masterList.add(master);
+			masterIP.setText("");
 		});
 
 		// show window
@@ -789,7 +747,6 @@ public class MainWindow extends JFrame {
 		// create tray icon
 		Image trayImage = Toolkit.getDefaultToolkit().getImage("icon.ico");
 
-		// TODO localize
 		PopupMenu trayMenu = new PopupMenu(texts.getString("trayMenu"));
 		MenuItem menuItem = new MenuItem(texts.getString("trayMenuShow"));
 		menuItem.addActionListener((e) -> {
@@ -798,7 +755,7 @@ public class MainWindow extends JFrame {
 		});
 		trayMenu.add(menuItem);
 
-		trayIcon = new TrayIcon(trayImage, "FunkrufSlave", trayMenu);
+		trayIcon = new TrayIcon(trayImage, "RasPager", trayMenu);
 		try {
 			SystemTray.getSystemTray().add(trayIcon);
 		} catch (AWTException e) {
@@ -819,17 +776,13 @@ public class MainWindow extends JFrame {
 	// run search
 	public void runSearch(boolean run) {
 		if (searchAddress.getText().isEmpty()) {
-			// TODO localize
-			showError("Suchlauf - Fehler",
-					"Damit der Suchlauf funktioniert, muss eine Skyper-Adresse eingegeben werden!");
+			showErrorResource("searchErrorTitle", "noSearchAddress");
 			return;
 		}
 
-		if (run) {
+		if (run && Main.server != null) {
 			if (Main.server != null) {
-				// TODO localize
-				if (!showConfirm("Suchlauf",
-						"Um einen Suchlauf durchzufuehren, darf der Server nicht laufen. Wollen Sie den Server jetzt beenden?")) {
+				if (!showConfirmResource("searchRunningTitle", "searchRunningText")) {
 					return;
 				}
 
@@ -880,9 +833,7 @@ public class MainWindow extends JFrame {
 		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
 
 		if (Main.running) {
-			// TODO localize
-			if (showConfirm("Config uebernehmen",
-					"Der Server laeuft bereits. Um die Einstellungen zu uebernehmen, muss der Server neugestartet werden. Soll er jetzt neugestartet werden?")) {
+			if (showConfirmResource("cfgRunningTitle", "cfgRunningText")) {
 				Main.stopServer(false);
 				Main.startServer(false);
 
@@ -902,8 +853,8 @@ public class MainWindow extends JFrame {
 		}
 
 		// load serial
-		serialPortList.setSelectedItem(config.getString(ConfigKeys.SERIAL_PORT));
-		serialPin.setSelectedItem(config.getString(ConfigKeys.SERIAL_PIN));
+		serialPortList.setSelectedItem(config.getString(ConfigKeys.SERIAL_PORT, null));
+		serialPin.setSelectedItem(config.getString(ConfigKeys.SERIAL_PIN, null));
 		delay.setText(Integer.toString(config.getInt(ConfigKeys.TX_DELAY, 0)));
 
 		// load raspi / gpio
@@ -980,8 +931,13 @@ public class MainWindow extends JFrame {
 		JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	public boolean showConfirm(String title, String message) {
-		return JOptionPane.showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+	private void showErrorResource(String title, String text) {
+		JOptionPane.showMessageDialog(null, texts.getString(text), texts.getString(title), JOptionPane.ERROR_MESSAGE);
+	}
+
+	private boolean showConfirmResource(String title, String message) {
+		return JOptionPane.showConfirmDialog(this, texts.getString(message), texts.getString(title),
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
 	}
 
 	public void updateTimeSlots(TimeSlots slots) {

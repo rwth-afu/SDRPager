@@ -9,20 +9,20 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.ssl.SslContext;
 
-final class FunkrufServerInitializer extends ChannelInitializer<SocketChannel> {
+final class ServerInitializer extends ChannelInitializer<SocketChannel> {
 
 	private static final StringEncoder encoder = new StringEncoder();
 	private static final StringDecoder decoder = new StringDecoder();
-	private final FunkrufServerHandler handler;
+	private final ServerHandler handler;
 	private final SslContext sslContext;
 
-	public FunkrufServerInitializer(FunkrufServerCallbacks callbacks) {
+	public ServerInitializer(ServerCallbacks callbacks) {
 		this(null, callbacks);
 	}
 
-	public FunkrufServerInitializer(SslContext sslContext, FunkrufServerCallbacks callbacks) {
+	public ServerInitializer(SslContext sslContext, ServerCallbacks callbacks) {
 		this.sslContext = sslContext;
-		this.handler = new FunkrufServerHandler(callbacks);
+		this.handler = new ServerHandler(callbacks);
 	}
 
 	@Override

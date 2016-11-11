@@ -20,12 +20,11 @@ import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 
 public final class Main {
 	private static final Logger log = Logger.getLogger(Main.class.getName());
-	private static final String VERSION = "1.4.0";
 
 	// TODO Get rid of all these static global vars
 	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
 	public static float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
-	public static ThreadWrapper<FunkrufServer> server;
+	public static ThreadWrapper<Server> server;
 	private static MainWindow mainWindow;
 	private static boolean showGui = true;
 	public static boolean running = false;
@@ -121,14 +120,14 @@ public final class Main {
 
 	public static void startServer(boolean join) {
 		if (server == null) {
-			FunkrufServer srv = new FunkrufServer(config);
+			Server srv = new Server(config);
 			// Register event handlers
 			srv.setAddMessageHandler(messages::push);
 			srv.setGetTimeHandler(scheduler::getTime);
 			srv.setTimeCorrectionHandler(scheduler::correctTime);
 			srv.setTimeSlotsHandler(scheduler::setTimeSlots);
 			// Create new server thread
-			server = new ThreadWrapper<FunkrufServer>(srv);
+			server = new ThreadWrapper<Server>(srv);
 		}
 
 		// start scheduler (not searching)
@@ -196,7 +195,6 @@ public final class Main {
 		server = null;
 
 		if (mainWindow != null) {
-			// show error and reset start button
 			mainWindow.showError("Server Error", message);
 			mainWindow.resetButtons();
 		}
@@ -231,7 +229,7 @@ public final class Main {
 
 		if (mainWindow != null) {
 			s = mainWindow.getSkyperAddress();
-			if (!s.equals("")) {
+			if (!s.isEmpty()) {
 				int i;
 				try {
 					i = Integer.parseInt(s);
@@ -259,19 +257,24 @@ public final class Main {
 			Class.forName("gnu.io.RXTXCommDriver");
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Failed to load RXTX.", e);
+		} finally {
+			System.setOut(out);
 		}
-
-		System.setOut(out);
 	}
 
 	private static void printVersion() {
-		System.out.println("FunkrufSlave - Version " + VERSION);
+		System.out.println("FunkrufSlave - Version 2.0.0");
 		System.out.println("by Ralf Wilke, Michael Delissen und Marvin Menzerath, powered by IHF RWTH Aachen");
 		System.out.println("New Versions at https://github.com/dh3wr/SDRPager/releases");
 		System.out.println();
 	}
 
 	public static void main(String[] args) {
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+			log.log(Level.SEVERE, String.format("Uncaught exception in thread %s.", t.getName()), e);
+			timer.cancel();
+		});
+
 		initRxTx();
 
 		if (!parseArguments(args)) {
@@ -281,8 +284,7 @@ public final class Main {
 		running = false;
 
 		if (showGui) {
-			// TODO fix
-			mainWindow = new MainWindow(null, transmitter);
+			mainWindow = new MainWindow(config, transmitter);
 		} else {
 			startServer(true);
 		}

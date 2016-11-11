@@ -5,8 +5,8 @@ import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.logging.Logger;
 
-final class FunkrufServerCallbacks {
-	private static final Logger log = Logger.getLogger(FunkrufServerCallbacks.class.getName());
+final class ServerCallbacks {
+	private static final Logger log = Logger.getLogger(ServerCallbacks.class.getName());
 
 	private Consumer<Message> messageHandler;
 	private IntConsumer timeCorrectionHandler;
