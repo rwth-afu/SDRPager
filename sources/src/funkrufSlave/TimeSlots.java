@@ -6,7 +6,7 @@ public class TimeSlots {
 	// slot configuration
 	private boolean[] slots;
 	// last slot
-	private char lastSlot = ' ';
+	private int lastSlot = -1;
 
 	// constructor
 	public TimeSlots() {
@@ -14,8 +14,8 @@ public class TimeSlots {
 		this.slots = new boolean[16];
 	}
 
-	// parse string and set configuration
-	public void setSlots(String slots) {
+	// Take a string with allowed slots and set the local bool array accordingly
+	public void setAllowedSlots(String slots) {
 		this.slots = new boolean[16];
 
 		for (int i = 0; i < slots.length(); i++) {
@@ -24,32 +24,49 @@ public class TimeSlots {
 		}
 	}
 
-	// check if slot is allowed and count how many allowed slots are in a row
-	// (starting at given slot)
-	public int checkSlot(char cSlot) {
-		int count = 0;
-		// char interpreted as hex to int
-		int iSlot = Integer.parseInt(cSlot + "", 16);
-
-		for (int slot = iSlot; this.slots[slot % 16] && slot < iSlot + 16; slot++) {
-			// count allowed slots
-			count++;
-		}
-
-		// set last slot to this slot
-		this.lastSlot = cSlot;
-
-		return count;
+	public char iSlotTocSlot (int iSlot)
+	{
+		if (iSlot >= 0 && iSlot <= 16) {
+			return String.format("%1x", iSlot).charAt(0);
+		} else
+			// TODO: Log-Message
+			return "";
 	}
 
-	public int checkSlotInt(int iSlot) {
-		int count = 0;
+	public int cSlotToiSlot (chat cSlot)
+	{
+		// char interpreted as hex to int
+		int iSlot = Integer.parseInt(cSlot + "", 16);
+		if (iSlot >= 0 && iSlot <= 16) {
+			return iSlot;
+		} else
+			//TODO: Log-Message
+			return (-1);
+	}
 
-		for (int slot = iSlot; this.slots[slot % 16] && slot < iSlot + 16; slot++) {
+	public boolean isSlotAllowed(int iSlot)
+	{
+		if (iSlot >= 0 && iSlot <= 16) {
+			return this.slots[iSlot];
+		} else {
+			// TODO: give log message
+			return false;
+		}
+	}
+
+
+	// check if slot is allowed and count how many allowed slots are in a row
+	// (starting at given slot)
+	// Return 0 if given slot is not active
+	public int getAllowedSlotsInRow(int iSlot) {
+		int count = 0;
+		// Loop through all possible timeslots and check if they are allowed
+		// If the given slot is already not allowed, the for loop will newer
+		// be executed, thus the result is 0
+		for (int i = iSlot; (this.slots[i % 16]) && (i < iSlot + 16); i++) {
 			// count allowed slots
 			count++;
 		}
-
 		return count;
 	}
 
@@ -65,7 +82,6 @@ public class TimeSlots {
 				s += String.format("%1x", i);
 			}
 		}
-
 		return s;
 	}
 
@@ -77,22 +93,15 @@ public class TimeSlots {
 	// get current slot as char by time
 	public char getCurrentSlot(int time) {
 		// getCurrentSlotInt and convert int to char in hex format
-		return String.format("%1x", getCurrentSlotInt(time)).charAt(0);
-
+		return String.format("%1x", getCurrentSlot(time)).charAt(0);
 	}
 
 	// get current slot as int by time
-	public int getCurrentSlotInt(int time) {
-		// time (in 0.1s)
-		// time per slot 3.75s = 37.5 * 0.1s
-		// total 16 slots, so % 16
-		// *** Very probably a bug ***
-		// int slot = ((int) (time / 64.0)) % 16;
-
+	public int getCurrentSlot(int time) {
+		// time (in 0.1s), time per slot 3.75s = 37.5 * 0.1s
 		// One time slot has a length of 60 sec/16 slot = 3.75 s = 37.5 * 0.1 s
-		// % 16 to warp around complete minutes
+		// % 16 to warp around complete minutes, as every minute has 16 slots
 		int slot = ((int) (time / 37.5)) % 16;
-
 		return slot;
 	}
 
@@ -101,8 +110,8 @@ public class TimeSlots {
 		return this.lastSlot == cSlot;
 	}
 
-	public boolean nextSlotIsActive(int time) {
+	public boolean isNextSlotAllowed(int time) {
 		// Check if next slot is active
-		return this.checkSlotInt((this.getCurrentSlotInt(time) + 1 ) % 16) > 0;
+		return this.isSlotAllowed((this.getCurrentSlot(time) + 1 ) % 16);
 	}
 }
