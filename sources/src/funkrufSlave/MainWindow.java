@@ -337,7 +337,7 @@ public class MainWindow extends JFrame {
 
 				// get slot count
 				int slot = Main.timeSlots.getCurrentSlotInt(Main.scheduler.getTime());
-				int slotCount = Main.timeSlots.checkSlot(String.format("%1x", slot).charAt(0));
+				int slotCount = Main.timeSlots.getAllowedSlotsInRow(slot);
 
 				// draw current slots (from slot to slot + slotCount) with
 				// different color

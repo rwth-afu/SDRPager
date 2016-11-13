@@ -5,8 +5,9 @@ public class TimeSlots {
 
 	// slot configuration
 	private boolean[] slots;
-	// last slot
-	private int lastSlot = -1;
+
+    // lastTimeCheckedSlot
+	private int lasttimeCheckedSlot = -1;
 
 	// constructor
 	public TimeSlots() {
@@ -93,22 +94,46 @@ public class TimeSlots {
 	// get current slot as char by time
 	public char getCurrentSlot(int time) {
 		// getCurrentSlotInt and convert int to char in hex format
-		return String.format("%1x", getCurrentSlot(time)).charAt(0);
+		return String.format("%1x", this.getCurrentSlot(time)).charAt(0);
 	}
 
 	// get current slot as int by time
 	public int getCurrentSlot(int time) {
-		// time (in 0.1s), time per slot 3.75s = 37.5 * 0.1s
-		// One time slot has a length of 60 sec/16 slot = 3.75 s = 37.5 * 0.1 s
-		// % 16 to warp around complete minutes, as every minute has 16 slots
-		int slot = ((int) (time / 37.5)) % 16;
+		// time (in 0.1s), time per slot 6.4 s = 64 * 0.1s
+		// % 16 to warp around complete minutes, as there are 16 timeslots avaliable.
+
+        // **** IMPORTANT ****
+
+        // This means 16 timeslots need 102.4 seconds, not 60.
+		int slot = ((int) (time / 64)) % 16;
 		return slot;
 	}
 
-	// check if given slot is last slot
-	public boolean isLastSlot(char cSlot) {
-		return this.lastSlot == cSlot;
-	}
+	public int getStartTimefromSlot(int slot, int time) {
+        int timeActualSlot = time % 1024;
+        return (int) (timeActualSlot + (slot * 64));
+    }
+
+    public int getEndTimefromSlot(int slot, int time) {
+        return (this.getStartTimefromSlot(slot, time) + 1024);
+    }
+
+    public int getTimetoNextSlot(int time)
+    {
+        int NextSlot = (ActualSlot + 1) % 16;
+        return (this.getStartTimefromSlot(NextSlot, time) - time);
+    }
+
+    // check if given slot is last slot
+	public boolean isSlotChanged(int time) {
+        int nowslot = getCurrentSlot(time);
+        if (nowslot == this.lasttimeCheckedSlot) {
+            return false;
+        } else {
+            this.lasttimeCheckedSlot = nowslot;
+            return true;
+        }
+    }
 
 	public boolean isNextSlotAllowed(int time) {
 		// Check if next slot is active

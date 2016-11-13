@@ -458,7 +458,7 @@ public class Main {
 	}
 
 	// main
-	public static void main(String[] args) {
+	public static void Main(String[] args) {
 		// to prevent rxtx to write to console
 		PrintStream out = System.out;
 		System.setOut(new PrintStream(new OutputStream() {

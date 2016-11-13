@@ -85,7 +85,7 @@ public class FunkrufProtocol {
 				break;
 			case '4':
 				// set slots
-				timeSlots.setSlots(parts[1]);
+				timeSlots.setAllowedSlots(parts[1]);
 
 				log(timeSlots.getSlots(), Log.COMMUNICATION, Log.DEBUG_CONNECTION);
 
