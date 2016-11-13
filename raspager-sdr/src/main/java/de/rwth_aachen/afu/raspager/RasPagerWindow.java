@@ -52,11 +52,10 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.system.SystemInfo.BoardType;
 
-import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 import de.rwth_aachen.afu.raspager.sdr.SerialPortComm;
 
-public class MainWindow extends JFrame {
-	private static final Logger log = Logger.getLogger(MainWindow.class.getName());
+public class RasPagerWindow extends JFrame {
+	private static final Logger log = Logger.getLogger(RasPagerWindow.class.getName());
 	private static final long serialVersionUID = 1L;
 
 	private JPanel main;
@@ -91,15 +90,15 @@ public class MainWindow extends JFrame {
 	private JButton searchStop;
 	private JTextField searchAddress;
 
-	private final Configuration config;
-	private final SDRTransmitter transmitter;
+	private final RasPager app;
+	// private final Configuration config;
+	// private final SDRTransmitter transmitter;
 	private TimeSlots timeSlots = new TimeSlots();
 	private final ResourceBundle texts;
 
 	// constructor
-	public MainWindow(Configuration config, SDRTransmitter transmitter) {
-		this.config = config;
-		this.transmitter = transmitter;
+	public RasPagerWindow(RasPager app) {
+		this.app = app;
 
 		// Load locale stuff
 		texts = ResourceBundle.getBundle("MainWindow");
@@ -122,12 +121,12 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent event) {
-				if (Main.running && !showConfirmResource("askQuitTitle", "askQuitText")) {
+				if (app.isRunning() && !showConfirmResource("askQuitTitle", "askQuitText")) {
 					return;
 				}
 
-				if (Main.running) {
-					Main.stopServer(false);
+				if (app.isRunning()) {
+					app.stopServer(false);
 				}
 
 				dispose();
@@ -197,7 +196,7 @@ public class MainWindow extends JFrame {
 		correctionSlider.setBounds(correctionSliderBounds);
 		correctionSlider.addChangeListener((e) -> {
 			correctionActual.setText(String.format("%+5.2f", correctionSlider.getValue() / 100.));
-			transmitter.setCorrection(correctionSlider.getValue() / 100.0f);
+			app.getTransmitter().setCorrection(correctionSlider.getValue() / 100.0f);
 		});
 		main.add(correctionSlider);
 
@@ -219,7 +218,7 @@ public class MainWindow extends JFrame {
 		searchStop.setBounds(275, 434, 70, 18);
 		searchStop.setEnabled(false);
 		searchStop.addActionListener((e) -> {
-			Main.stopSearching();
+			app.stopSearching();
 		});
 		main.add(searchStop);
 
@@ -369,12 +368,12 @@ public class MainWindow extends JFrame {
 		// server start button
 		startButton = new JButton(texts.getString("startButtonStart"));
 		startButton.addActionListener((e) -> {
-			if (Main.running) {
-				Main.stopServer(false);
+			if (app.isRunning()) {
+				app.stopServer(false);
 				startButton.setText(texts.getString("startButtonStart"));
 
 			} else {
-				Main.startServer(false);
+				app.startServer(false);
 				startButton.setText(texts.getString("startButtonStop"));
 			}
 		});
@@ -509,7 +508,7 @@ public class MainWindow extends JFrame {
 				File file = fileChooser.getSelectedFile();
 
 				try {
-					config.load(file.getPath());
+					app.getConfig().load(file.getPath());
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "Invalid configuration file.", e);
 					showErrorResource("invalidConfigTitle", "invalidConfigText");
@@ -536,7 +535,7 @@ public class MainWindow extends JFrame {
 
 				try {
 					setConfig();
-					config.save(file.getPath());
+					app.getConfig().save(file.getPath());
 				} catch (Exception ex) {
 					log.log(Level.SEVERE, "Failed to save configuration file.", ex);
 					showErrorResource("failedConfigTitle", "failedConfigText");
@@ -780,16 +779,17 @@ public class MainWindow extends JFrame {
 			return;
 		}
 
-		if (run && Main.server != null) {
-			if (Main.server != null) {
+		// TODO What?
+		if (run && app.isServerRunning()) {
+			if (app.isServerRunning()) {
 				if (!showConfirmResource("searchRunningTitle", "searchRunningText")) {
 					return;
 				}
 
-				Main.stopServer(false);
+				app.stopServer(false);
 			}
 
-			Main.startScheduler(true);
+			app.startScheduler(true);
 
 			searchStart.setEnabled(false);
 			searchStop.setEnabled(true);
@@ -798,7 +798,7 @@ public class MainWindow extends JFrame {
 			searchAddress.setEditable(false);
 
 		} else {
-			Main.stopScheduler();
+			app.stopScheduler();
 
 			searchStart.setEnabled(true);
 			searchStop.setEnabled(false);
@@ -809,6 +809,8 @@ public class MainWindow extends JFrame {
 	}
 
 	public void setConfig() {
+		Configuration config = app.getConfig();
+
 		config.setInt(ConfigKeys.NET_PORT, Integer.parseInt(port.getText()));
 		config.setString(ConfigKeys.NET_MASTERS, String.join(" ", masterList.getItems()));
 
@@ -832,10 +834,10 @@ public class MainWindow extends JFrame {
 		config.setInt(ConfigKeys.TX_DELAY, Integer.parseInt(delay.getText()));
 		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
 
-		if (Main.running) {
+		if (app.isRunning()) {
 			if (showConfirmResource("cfgRunningTitle", "cfgRunningText")) {
-				Main.stopServer(false);
-				Main.startServer(false);
+				app.stopServer(false);
+				app.startServer(false);
 
 				startButton.setText("Server stoppen");
 			}
@@ -843,6 +845,8 @@ public class MainWindow extends JFrame {
 	}
 
 	public void loadConfig() {
+		Configuration config = app.getConfig();
+
 		port.setText(Integer.toString(config.getInt(ConfigKeys.NET_PORT, 1337)));
 
 		// load masters
@@ -947,7 +951,7 @@ public class MainWindow extends JFrame {
 
 	public String getStepWidth() {
 		if (searchStepWidth.getText().isEmpty()) {
-			searchStepWidth.setText(Float.toString(Main.searchStepSize));
+			searchStepWidth.setText(Float.toString(app.searchStepSize));
 		}
 
 		return searchStepWidth.getText();
@@ -958,7 +962,8 @@ public class MainWindow extends JFrame {
 	}
 
 	public void updateCorrection() {
-		correctionActual.setText(String.format("%+4.2f", transmitter.getCorrection()));
-		correctionSlider.setValue((int) (transmitter.getCorrection() * 100));
+		float correction = app.getTransmitter().getCorrection();
+		correctionActual.setText(String.format("%+4.2f", correction));
+		correctionSlider.setValue((int) (correction * 100));
 	}
 }
