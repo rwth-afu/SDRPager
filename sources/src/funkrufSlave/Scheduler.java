@@ -8,8 +8,11 @@ public class Scheduler extends TimerTask {
 	public final static int TIMERCYCLE_MS = 10;
 
 	protected enum states {
-		WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED, DATA_ENCODED, WAITING_TX_DELAY,
-        CURRENTLY_TRANSMITTING, CURRENT_SLOT_IS_STILL_ALLOWED
+		WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED,
+		DATA_ENCODED,
+		WAITING_TX_DELAY,
+		CURRENTLY_TRANSMITTING,
+		CURRENT_SLOT_IS_STILL_ALLOWED
 	}
 
 	protected states currentState = states.WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED;
@@ -59,55 +62,54 @@ public class Scheduler extends TimerTask {
 
 		// update GUI
 
-		if (Main.timeSlots.isSlotChanged(time) {
+		if (Main.timeSlots.isSlotChanged(time)) {
 			// draw all slots
 			Main.drawSlots();
-        	char slot = Main.timeSlots.getCurrentSlot(time);
-			log("Scheduler: Updating GUI, now slot " + slot, Log.INFO);
+        	char slot = Main.timeSlots.getCurrentSlotChar(time);
+			log("Scheduler: Updating GUI, now slot " + String.valueOf(slot), Log.INFO);
 		}
 
 		switch (currentState) {
             case WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED:
-				if (Main.timeSlots.nextSlotIsActive(this.time) && (!Main.messageQueue.isEmpty())) {
+				if (Main.timeSlots.isNextSlotAllowed(this.time) && (!Main.messageQueue.isEmpty())) {
 					// Get time left until next active slot will start
-                    int time_left_100ms = Main.timeSlots.getTimetoNextSlot(this.time)
+                    int time_left_100ms = Main.timeSlots.getTimetoNextSlot(this.time);
 					// time_left_100ms contains now the time until next active slot in 0.1s
 
 					// Check it now its time to encode?
 					if (time_left_100ms <= MAXENCODETIME_100ms) {
 
-                        // Just DEBUG
-                        if (!Main.messageQueue.isEmpty())
-                        {
-                            log("Scheduler: messageQueue is not empty", Log.INFO);
-                        } else
-                        {
-                            log("Scheduler: messageQueue is empty", Log.INFO);
-                        }
+						// Just DEBUG
+						if (!Main.messageQueue.isEmpty()) {
+							log("Scheduler: messageQueue is not empty", Log.INFO);
+						} else {
+							log("Scheduler: messageQueue is empty", Log.INFO);
+						}
 
-                        // Get number of allowed slots in row, starting with the next slot (which must
-                        // be allowed, otherwise we wouldn't be here. Get next slot by adding 1 and
-                        // wrapping around
+						// Get number of allowed slots in row, starting with the next slot (which must
+						// be allowed, otherwise we wouldn't be here. Get next slot by adding 1 and
+						// wrapping around
 
-                        int nextAllowedSlot = Main.timeSlots.getCurrentSlot(this.time) + 1) % 16);
-                        int allowedSlotsCount = Main.timeSlots.getAllowedSlotsInRow(nextAllowedSlot);
+						int nextAllowedSlot = (Main.timeSlots.getCurrentSlot(this.time) + 1) % 16;
+						int allowedSlotsCount = Main.timeSlots.getAllowedSlotsInRow(nextAllowedSlot);
 
-					    log("Scheduler: next slot will be allowed", Log.INFO);
+						log("Scheduler: next slot will be allowed", Log.INFO);
 
-					    log("Scheduler: checkSlot# Next allowed slot: " +
-                                Main.timeSlots.iSlotTocSlot(nextAllowedSlot) +
-                            " - Number of allowed slots in row: " + allowedSlotsCount, Log.INFO);
+						log("Scheduler: checkSlot# Next allowed slot: " +
+								String.valueOf(Main.timeSlots.iSlotTocSlot(nextAllowedSlot)) +
+								" - Number of allowed slots in row: " + String.valueOf(allowedSlotsCount), Log.INFO);
 
 
-					// Get data from queue according to time slot count
-					if (PrepareData(allowedSlotsCount)) {
+						// Get data from queue according to time slot count
+						if (PrepareData(allowedSlotsCount)) {
 
-                        // convert data to a playable sound
-                        soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
-                        log("Scheduler: Encoding fertig, state = DATA_ENCODED", Log.INFO);
+							// convert data to a playable sound
+							soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
+							log("Scheduler: Encoding fertig, state = DATA_ENCODED", Log.INFO);
 
-                        this.currentState = states.DATA_ENCODED;
-                    }
+							this.currentState = states.DATA_ENCODED;
+						}
+					}
 				}
 				break;
 
@@ -115,7 +117,7 @@ public class Scheduler extends TimerTask {
 				// Current slot already given
 
 				// Check is current slot is allowed
-				if (Main.timeSlots.isSlotAllowed(time)) {
+				if (Main.timeSlots.isSlotAllowed(Main.timeSlots.getCurrentSlot(time))) {
 					// turn transmitter on
 					Main.log.println("Turning transmitter on...", Log.INFO);
 					if (Main.serialPortComm != null) Main.serialPortComm.setOn();
@@ -150,7 +152,6 @@ public class Scheduler extends TimerTask {
                 // If we are still in an allowed slot
                 if (Main.timeSlots.isSlotAllowed(time)) {
 
-                }
                     // if there is something to send
                     if (!Main.messageQueue.isEmpty()) {
                         log("Scheduler: Current slot still allowed, prepare data to be tranmitted", Log.INFO);
@@ -176,20 +177,21 @@ public class Scheduler extends TimerTask {
 	}
 
 	public void Notify_Audio_is_sent_completely() {
-        // If Audio is sent, first
+		// If Audio is sent, first
 
-        // turn transmitter off
-        Main.log.println("Turning transmitter off...", Log.INFO);
-        if (Main.serialPortComm != null) Main.serialPortComm.setOff();
-        if (Main.gpioPortComm != null) Main.gpioPortComm.setOff();
+		// turn transmitter off
+		Main.log.println("Turning transmitter off...", Log.INFO);
+		if (Main.serialPortComm != null) Main.serialPortComm.setOff();
+		if (Main.gpioPortComm != null) Main.gpioPortComm.setOff();
 
-        // if the current slot is still allowed, remember this
-        if (Main.timeSlots.isSlotAllowed(time)) {
-            this.currentState = states.CURRENT_SLOT_IS_STILL_ALLOWED;
-        } else {
-            // else reset state machine
-            this.currentState = states.WAITING_FOR_NEXT_SLOT_TO_BE_ACTIVE;
-        }
+		// if the current slot is still allowed, remember this
+		if (Main.timeSlots.isSlotAllowed(time)) {
+			this.currentState = states.CURRENT_SLOT_IS_STILL_ALLOWED;
+		} else {
+			// else reset state machine
+			this.currentState = states.WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED;
+		}
+	}
 
 
 	// Prepare data depending on number of allowed slots

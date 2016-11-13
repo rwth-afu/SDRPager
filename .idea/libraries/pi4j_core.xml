@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="pi4j-core">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/sources/lib/pi4j-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sources/lib/pi4j-device.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sources/lib/pi4j-gpio-extension.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sources/lib/pi4j-service.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sources/lib/RXTXcomm.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

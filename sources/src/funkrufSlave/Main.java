@@ -13,7 +13,7 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Main {
-	public static final String VERSION = "1.5";
+	public static final String VERSION = "1.5.5";
 
 	public static ServerThread server;
 	public static Deque<Message> messageQueue;
@@ -458,7 +458,7 @@ public class Main {
 	}
 
 	// main
-	public static void Main(String[] args) {
+	public static void main(String[] args) {
 		// to prevent rxtx to write to console
 		PrintStream out = System.out;
 		System.setOut(new PrintStream(new OutputStream() {

@@ -62,7 +62,7 @@ public class SearchScheduler extends Scheduler {
 
 	// get data depending on slot count
 	@Override
-	public void getData(int slotCount) {
+	public boolean PrepareData(int slotCount) {
 		/*this.serialDelay = Main.config.getDelay();
 
 		// if it is not the first time
@@ -116,6 +116,7 @@ public class SearchScheduler extends Scheduler {
 
 		// set send time
 		this.sendTime = data.size() * 2f / 75f + 0.1;*/
+		return false;
 	}
 
 	private void addMessage(Message message) {

@@ -31,10 +31,10 @@ public class TimeSlots {
 			return String.format("%1x", iSlot).charAt(0);
 		} else
 			// TODO: Log-Message
-			return "";
+			return ' ';
 	}
 
-	public int cSlotToiSlot (chat cSlot)
+	public int cSlotToiSlot (char cSlot)
 	{
 		// char interpreted as hex to int
 		int iSlot = Integer.parseInt(cSlot + "", 16);
@@ -92,7 +92,7 @@ public class TimeSlots {
 	}
 
 	// get current slot as char by time
-	public char getCurrentSlot(int time) {
+	public char getCurrentSlotChar(int time) {
 		// getCurrentSlotInt and convert int to char in hex format
 		return String.format("%1x", this.getCurrentSlot(time)).charAt(0);
 	}
@@ -120,7 +120,7 @@ public class TimeSlots {
 
     public int getTimetoNextSlot(int time)
     {
-        int NextSlot = (ActualSlot + 1) % 16;
+        int NextSlot = (getCurrentSlot(time) + 1) % 16;
         return (this.getStartTimefromSlot(NextSlot, time) - time);
     }
 
