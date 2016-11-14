@@ -90,14 +90,14 @@ public class RasPagerWindow extends JFrame {
 	private JButton searchStop;
 	private JTextField searchAddress;
 
-	private final RasPager app;
+	private final RasPagerService app;
 	// private final Configuration config;
 	// private final SDRTransmitter transmitter;
 	private TimeSlots timeSlots = new TimeSlots();
 	private final ResourceBundle texts;
 
 	// constructor
-	public RasPagerWindow(RasPager app) {
+	public RasPagerWindow(RasPagerService app) {
 		this.app = app;
 
 		// Load locale stuff

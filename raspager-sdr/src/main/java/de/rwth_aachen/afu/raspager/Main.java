@@ -90,9 +90,9 @@ public final class Main {
 
 		initRxTx();
 
-		RasPager app = null;
+		RasPagerService app = null;
 		try {
-			app = new RasPager(configFile, startService);
+			app = new RasPagerService(configFile, startService);
 			app.run();
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Main application error.", t);

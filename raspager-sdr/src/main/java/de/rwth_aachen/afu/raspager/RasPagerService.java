@@ -10,8 +10,8 @@ import java.util.logging.Logger;
 
 import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 
-final class RasPager {
-	private static final Logger log = Logger.getLogger(RasPager.class.getName());
+final class RasPagerService {
+	private static final Logger log = Logger.getLogger(RasPagerService.class.getName());
 
 	// TODO Get rid of all these static global vars
 	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
@@ -26,7 +26,7 @@ final class RasPager {
 	private Scheduler scheduler;
 	private final RasPagerWindow window;
 
-	public RasPager(String configFile, boolean startService) throws FileNotFoundException, IOException {
+	public RasPagerService(String configFile, boolean startService) throws FileNotFoundException, IOException {
 		config.load(configFile);
 
 		if (!startService) {
