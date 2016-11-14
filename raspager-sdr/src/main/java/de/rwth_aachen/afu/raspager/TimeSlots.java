@@ -47,7 +47,7 @@ final class TimeSlots {
 	public synchronized int getSlotCount(int slot) {
 		int count = 0;
 
-		for (int i = slot; slots[i % 16] && i < slot + 16; ++i) {
+		for (int i = slot; slots[i % 16] && (i < slot + 16); ++i) {
 			++count;
 		}
 
@@ -79,7 +79,7 @@ final class TimeSlots {
 	 * @return Status of the slot at the given index.
 	 */
 	public synchronized boolean getSlot(int index) {
-		return slots[index];
+		return slots[index % 16];
 	}
 
 	/**
@@ -100,8 +100,8 @@ final class TimeSlots {
 	 *            Time
 	 * @return True if the next slot will be active.
 	 */
-	public synchronized boolean isNextSlotActive(int time) {
-		return (getSlotCount(getCurrentSlot(time) + 1) % 16 > 0);
+	public synchronized boolean isNextSlotAllowed(int time) {
+		return getSlot(getCurrentSlot(time) + 1);
 	}
 
 	/**
@@ -123,15 +123,27 @@ final class TimeSlots {
 	 * @return Slot index.
 	 */
 	public static int getSlotIndex(int time) {
-		// time (in 0.1s)
-		// time per slot 3.75s = 37.5 * 0.1s
-		// total 16 slots, so % 16
-		// *** Very likely a bug ***
-		// return ((int) (time / 64.0)) % 16;
+		// time (in 0.1s), time per slot 6.4 s = 64 * 0.1s
+		// % 16 to warp around complete minutes, as there are 16 timeslots
+		// avaliable.
 
-		// One time slot has a length of 60 sec/16 slot = 3.75 s = 37.5 * 0.1 s
-		// % 16 to warp around complete minutes
-		return ((int) (time / 37.5)) % 16;
+		// **** IMPORTANT ****
+
+		// This means 16 timeslots need 102.4 seconds, not 60.
+		return ((int) (time / 64)) % 16;
+	}
+
+	public static int getStartTimeForSlot(int slot, int time) {
+		return ((time % 1024) + (slot * 64));
+	}
+
+	public static int getEndTimeForSlot(int slot, int time) {
+		return (getStartTimeForSlot(slot, time) + 1024);
+	}
+
+	public static int getTimeToNextSlot(int time) {
+		int nextSlot = (getCurrentSlot(time) + 1) % 16;
+		return (getStartTimeForSlot(nextSlot, time) - time);
 	}
 
 }

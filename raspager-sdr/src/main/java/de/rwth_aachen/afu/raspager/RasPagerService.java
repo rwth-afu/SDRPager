@@ -15,7 +15,7 @@ final class RasPagerService {
 
 	// TODO Get rid of all these static global vars
 	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
-	public float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
+	private float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 	private ThreadWrapper<Server> server;
 	private boolean running = false;
 
@@ -50,6 +50,10 @@ final class RasPagerService {
 
 	public SDRTransmitter getTransmitter() {
 		return transmitter;
+	}
+
+	public float getSearchStepSize() {
+		return searchStepSize;
 	}
 
 	// start scheduler (or search scheduler)

@@ -951,7 +951,7 @@ public class RasPagerWindow extends JFrame {
 
 	public String getStepWidth() {
 		if (searchStepWidth.getText().isEmpty()) {
-			searchStepWidth.setText(Float.toString(app.searchStepSize));
+			searchStepWidth.setText(Float.toString(app.getSearchStepSize()));
 		}
 
 		return searchStepWidth.getText();

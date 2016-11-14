@@ -40,7 +40,7 @@ class Scheduler extends TimerTask {
 			updateTimeSlotsHandler.accept(slots);
 		}
 
-		if (slots.isNextSlotActive(time) && !messageQueue.isEmpty()) {
+		if (slots.isNextSlotAllowed(time) && !messageQueue.isEmpty()) {
 			log.fine("Next slot will be active.");
 			int count = slots.getSlotCount(slot);
 			log.fine(String.format("Slot %c %d", slot, count));
