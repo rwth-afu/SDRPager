@@ -24,7 +24,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -79,12 +78,12 @@ public class RasPagerWindow extends JFrame {
 	private JComboBox<String> serialPin;
 	private JCheckBox invert;
 	private JTextField delay;
-	private JComboBox raspiList;
-	private JComboBox gpioList;
+	private JComboBox<String> raspiList;
+	private JComboBox<String> gpioList;
 	private JButton btnGpioPins;
 	private JRadioButton radioUseSerial;
 	private JRadioButton radioUseGpio;
-	private JComboBox soundDeviceList;
+	private JComboBox<Mixer.Info> soundDeviceList;
 
 	private JButton searchStart;
 	private JButton searchStop;
@@ -478,7 +477,7 @@ public class RasPagerWindow extends JFrame {
 		soundDeviceLabel.setBounds(174, 318, 100, 15);
 		configurationPanel.add(soundDeviceLabel);
 
-		soundDeviceList = new JComboBox();
+		soundDeviceList = new JComboBox<>();
 		soundDeviceList.setBounds(265, 316, 349, 18);
 		Mixer.Info[] soundDevices = AudioSystem.getMixerInfo();
 		for (Mixer.Info device : soundDevices) {
@@ -615,13 +614,13 @@ public class RasPagerWindow extends JFrame {
 		gpioPanel.setLayout(null);
 		gpioPanel.setEnabled(false);
 
-		raspiList = new JComboBox();
+		raspiList = new JComboBox<>();
 		raspiList.setBounds(12, 20, 203, 18);
 		gpioPanel.add(raspiList);
 		raspiList.addItem(texts.getString("itemDeactivated"));
 		raspiList.setEnabled(false);
 
-		gpioList = new JComboBox();
+		gpioList = new JComboBox<>();
 		gpioList.setBounds(12, 42, 203, 18);
 		gpioPanel.add(gpioList);
 		gpioList.addItem(texts.getString("itemDeactivated"));
@@ -637,50 +636,38 @@ public class RasPagerWindow extends JFrame {
 		gpioPanel.add(radioUseGpio);
 		radioUseGpio.setEnabled(true);
 
-		radioUseGpio.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (radioUseGpio.isSelected()) {
-					radioUseGpio.setEnabled(false);
-					radioUseSerial.setEnabled(true);
-					radioUseSerial.setSelected(false);
-					gpioPanel.setEnabled(true);
-					serialPanel.setEnabled(false);
-					raspiList.setEnabled(true);
-					gpioList.setEnabled(true);
-					btnGpioPins.setEnabled(true);
+		radioUseGpio.addActionListener((e) -> {
+			if (radioUseGpio.isSelected()) {
+				radioUseGpio.setEnabled(false);
+				radioUseSerial.setEnabled(true);
+				radioUseSerial.setSelected(false);
+				gpioPanel.setEnabled(true);
+				serialPanel.setEnabled(false);
+				raspiList.setEnabled(true);
+				gpioList.setEnabled(true);
+				btnGpioPins.setEnabled(true);
 
-					serialPortList.setEnabled(false);
-					serialPin.setEnabled(false);
-				}
+				serialPortList.setEnabled(false);
+				serialPin.setEnabled(false);
 			}
 		});
-		btnGpioPins.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				EventQueue.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							new GpioView().setVisible(true);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
-			}
+		btnGpioPins.addActionListener((e) -> {
+			EventQueue.invokeLater(() -> {
+				try {
+					new GpioView().setVisible(true);
+				} catch (Exception ex) {
+					log.log(Level.SEVERE, "Failed to open GPIO view.", ex);
+				}
+			});
 		});
 
-		raspiList.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				gpioList.removeAllItems();
-				gpioList.addItem(texts.getString("itemDeactivated"));
+		raspiList.addActionListener((e) -> {
+			gpioList.removeAllItems();
+			gpioList.addItem(texts.getString("itemDeactivated"));
 
-				if (!(raspiList.getSelectedItem() instanceof BoardType))
-					return;
-
-				for (Pin p : RaspiPin.allPins((BoardType) raspiList.getSelectedItem())) {
-					gpioList.addItem(p);
-				}
+			BoardType type = BoardType.valueOf(raspiList.getSelectedItem().toString());
+			for (Pin p : RaspiPin.allPins(type)) {
+				gpioList.addItem(p.toString());
 			}
 		});
 
@@ -703,14 +690,13 @@ public class RasPagerWindow extends JFrame {
 			}
 		});
 
-		// get available serial ports and add them to list
-		ArrayList<String> serialPorts = SerialPortComm.getPorts();
+		java.util.List<String> serialPorts = SerialPortComm.getPorts();
 		for (int i = 0; i < serialPorts.size(); i++) {
 			serialPortList.addItem(serialPorts.get(i));
 		}
 
 		for (BoardType bt : BoardType.values()) {
-			raspiList.addItem(bt);
+			raspiList.addItem(bt.toString());
 		}
 
 		masterRemove.addActionListener((e) -> {
@@ -897,11 +883,13 @@ public class RasPagerWindow extends JFrame {
 
 		value = config.getString(ConfigKeys.GPIO_RASPI_REV);
 		if (value != null) {
-			raspiList.setSelectedItem(value);
-			// TODO impl
-			// for (Pin p : RaspiPin.allPins(Main.config.getRaspi())) {
-			// gpioList.addItem(p);
-			// }
+			BoardType type = BoardType.valueOf(value);
+			raspiList.setSelectedItem(type.toString());
+
+			for (Pin p : RaspiPin.allPins(type)) {
+				gpioList.addItem(p.getName());
+			}
+
 			gpioList.setSelectedItem(config.getString(ConfigKeys.GPIO_PIN));
 		}
 
