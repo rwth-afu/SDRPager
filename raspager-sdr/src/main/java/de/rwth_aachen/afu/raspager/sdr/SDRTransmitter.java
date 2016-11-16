@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 import de.rwth_aachen.afu.raspager.Configuration;
 import de.rwth_aachen.afu.raspager.Transmitter;
 
-public class SDRTransmitter implements Transmitter {
+public final class SDRTransmitter implements Transmitter {
 
 	private static final Logger log = Logger.getLogger(SDRTransmitter.class.getName());
 	private AudioEncoder encoder;
@@ -43,14 +43,15 @@ public class SDRTransmitter implements Transmitter {
 		close();
 
 		txDelay = config.getInt("txDelay", 0);
+		boolean invert = config.getBoolean("invert", false);
 
 		if (config.getBoolean("serial.use", false)) {
-			serial = new SerialPortComm(config.getString("serial.port"), config.getInt("serial.pin"),
-					config.getBoolean("invert"));
+			int pin = SerialPortComm.getPinNumber(config.getString("serial.pin"));
+			serial = new SerialPortComm(config.getString("serial.port"), pin, invert);
 		}
 
 		if (config.getBoolean("gpio.use", true)) {
-			gpio = new GpioPortComm(config.getString("gpio.pin"), config.getBoolean("invert", false));
+			gpio = new GpioPortComm(config.getString("gpio.pin"), invert);
 		}
 
 		encoder = new AudioEncoder(config.getString("sdr.device"));
@@ -85,6 +86,7 @@ public class SDRTransmitter implements Transmitter {
 	private void enable() {
 		try {
 			if (serial != null) {
+				log.fine("Enabling serial pin.");
 				serial.setOn();
 			}
 		} catch (Throwable t) {
@@ -94,6 +96,7 @@ public class SDRTransmitter implements Transmitter {
 
 		try {
 			if (gpio != null) {
+				log.fine("Enabling GPIO pin.");
 				gpio.setOn();
 			}
 		} catch (Throwable t) {
@@ -105,6 +108,7 @@ public class SDRTransmitter implements Transmitter {
 	private void disable() {
 		try {
 			if (serial != null) {
+				log.fine("Disabling serial pin.");
 				serial.setOff();
 			}
 		} catch (Throwable t) {
@@ -113,6 +117,7 @@ public class SDRTransmitter implements Transmitter {
 
 		try {
 			if (gpio != null) {
+				log.fine("Disabling GPIO pin.");
 				gpio.setOff();
 			}
 		} catch (Throwable t) {

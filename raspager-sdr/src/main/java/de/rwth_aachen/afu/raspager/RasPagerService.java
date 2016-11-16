@@ -19,15 +19,15 @@ final class RasPagerService {
 	private ThreadWrapper<Server> server;
 	private boolean running = false;
 
-	private final Configuration config = new Configuration();
 	private final Timer timer = new Timer();
 	private final Deque<Message> messages = new ConcurrentLinkedDeque<>();
 	private final SDRTransmitter transmitter = new SDRTransmitter();
-	private Scheduler scheduler;
+	private final Configuration config;
 	private final RasPagerWindow window;
+	private Scheduler scheduler;
 
-	public RasPagerService(String configFile, boolean startService) throws FileNotFoundException, IOException {
-		config.load(configFile);
+	public RasPagerService(Configuration config, boolean startService) throws FileNotFoundException, IOException {
+		this.config = config;
 
 		if (!startService) {
 			window = new RasPagerWindow(this);
@@ -56,7 +56,6 @@ final class RasPagerService {
 		return searchStepSize;
 	}
 
-	// start scheduler (or search scheduler)
 	public void startScheduler(boolean searching) {
 		try {
 			transmitter.init(config);

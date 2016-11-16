@@ -15,7 +15,6 @@ import org.apache.commons.cli.ParseException;
 
 public final class Main {
 	private static final Logger log = Logger.getLogger(Main.class.getName());
-	private static String configFile = null;
 	private static boolean startService = false;
 
 	private static void initRxTx() {
@@ -43,7 +42,7 @@ public final class Main {
 		System.out.println();
 	}
 
-	private static boolean parseArguments(String[] args) {
+	private static boolean parseArguments(String[] args, Configuration config) {
 		Options opts = new Options();
 		opts.addOption("c", "config", true, "Configuration file to use.");
 		opts.addOption("h", "help", false, "Show this help.");
@@ -74,7 +73,13 @@ public final class Main {
 			startService = true;
 		}
 
-		configFile = line.getOptionValue('c', "raspager.properties");
+		try {
+			String configFile = line.getOptionValue('c', "raspager.properties");
+			config.load(configFile);
+		} catch (Throwable t) {
+			log.log(Level.SEVERE, "Failed to load configuration file.", t);
+			return false;
+		}
 
 		return true;
 	}
@@ -84,7 +89,8 @@ public final class Main {
 			log.log(Level.SEVERE, String.format("Uncaught exception in thread %s.", t.getName()), e);
 		});
 
-		if (!parseArguments(args)) {
+		Configuration config = new Configuration();
+		if (!parseArguments(args, config)) {
 			return;
 		}
 
@@ -92,7 +98,7 @@ public final class Main {
 
 		RasPagerService app = null;
 		try {
-			app = new RasPagerService(configFile, startService);
+			app = new RasPagerService(config, startService);
 			app.run();
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Main application error.", t);

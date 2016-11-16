@@ -2,8 +2,7 @@ package de.rwth_aachen.afu.raspager.sdr;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
@@ -11,78 +10,136 @@ import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 
-public class SerialPortComm {
-	private static final Logger log = Logger.getLogger(SerialPortComm.class.getName());
-	// pins
+public final class SerialPortComm {
 	public static final int DTR = 0;
 	public static final int RTS = 1;
 
-	// current settings (port, pin, invert)
 	private SerialPort serialPort = null;
 	private int pin = DTR;
 	private boolean invert = false;
 
-	// constructor
+	/**
+	 * Gets the pin number for a given name.
+	 * 
+	 * @param pin
+	 *            Pin name
+	 * @return Pin number the corresponds to the given name.
+	 * @throws IllegalArgumentException
+	 *             If the given name does not match a pin.
+	 */
+	public static int getPinNumber(String pin) {
+		if ("DTR".equalsIgnoreCase(pin)) {
+			return DTR;
+		} else if ("RTS".equalsIgnoreCase(pin)) {
+			return RTS;
+		} else {
+			throw new IllegalArgumentException("Invalid pin.");
+		}
+	}
+
+	/**
+	 * Converts the pin number to a name.
+	 * 
+	 * @param pin
+	 *            Pin number to convert.
+	 * @return Pin name for the given number.
+	 * @throws IllegalArgumentException
+	 *             If the pin number is invalid.
+	 */
+	public static String getPinName(int pin) {
+		switch (pin) {
+		case DTR:
+			return "DTR";
+		case RTS:
+			return "RTS";
+		default:
+			throw new IllegalArgumentException("Invalid pin number.");
+		}
+	}
+
+	/**
+	 * Construct a new serial port controller.
+	 * 
+	 * @param portName
+	 *            Serial port to use.
+	 * @param pin
+	 *            Pin number to use (DTR or RTS).
+	 * @param invert
+	 *            Invert
+	 * @throws NoSuchPortException
+	 *             If the given port does not exist.
+	 * @throws PortInUseException
+	 *             If the given port is already in use.
+	 * @throws UnsupportedCommOperationException
+	 *             If rxtx is not happy.
+	 */
 	public SerialPortComm(String portName, int pin, boolean invert)
 			throws NoSuchPortException, PortInUseException, UnsupportedCommOperationException {
-		// set current settings
 		this.pin = pin;
 		this.invert = invert;
 
-		// check port
 		CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
-		// is port currently in use?
 		if (portIdentifier.isCurrentlyOwned()) {
 			throw new PortInUseException();
 		} else {
-			// open port
 			serialPort = (SerialPort) portIdentifier.open("FunkrufSlave", 2000);
 			serialPort.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
 					SerialPort.PARITY_NONE);
 		}
 
-		// set pin off
 		setOff();
 	}
 
-	// set pin on
+	/**
+	 * Enable the pin.
+	 * 
+	 * @throws IllegalStateException
+	 *             If the serial port is not initialized.
+	 */
 	public void setOn() {
-		// if invert, then status is set to false
-		// if not invert, then status is set to true
 		setStatus(!this.invert);
 	}
 
-	// set pin off
+	/**
+	 * Disables the pin.
+	 * 
+	 * @throws IllegalStateException
+	 *             If the serial port is not initialized.
+	 */
 	public void setOff() {
-		// if invert, then status is
 		setStatus(this.invert);
 	}
 
-	// set pin status
+	/**
+	 * Sets the pin status.
+	 * 
+	 * @param on
+	 *            Enable or disable the pin.
+	 * @throws IllegalStateException
+	 *             If the serial port is not initialized.
+	 */
 	private void setStatus(boolean on) {
 		if (serialPort == null) {
-			log.severe("Serial port is null.");
-			return;
+			throw new IllegalStateException("Serial port is not initialized.");
 		}
 
-		// set current pin
 		switch (this.pin) {
 		case DTR:
 			if (serialPort.isDTR() != on) {
 				serialPort.setDTR(on);
-				log.log(Level.FINE, "Set DTR to {0}.", on ? "on" : "off");
 			}
 			break;
 		case RTS:
 			if (serialPort.isRTS() != on) {
 				serialPort.setRTS(on);
-				log.log(Level.FINE, "Set RTS to {0}.", on ? "on" : "off");
 			}
 			break;
 		}
 	}
 
-	// close port if port is open
+	/**
+	 * Closes the serial port.
+	 */
 	public void close() {
 		if (serialPort != null) {
 			setOff();
@@ -91,11 +148,14 @@ public class SerialPortComm {
 		}
 	}
 
-	// get available ports
-	public static ArrayList<String> getPorts() {
-		ArrayList<String> list = new ArrayList<String>();
+	/**
+	 * Gets a list of available serial ports.
+	 * 
+	 * @return List of serial ports.
+	 */
+	public static List<String> getPorts() {
+		List<String> list = new ArrayList<String>();
 
-		// get all ports
 		@SuppressWarnings("unchecked")
 		Enumeration<CommPortIdentifier> portEnum = CommPortIdentifier.getPortIdentifiers();
 		while (portEnum.hasMoreElements()) {
@@ -108,17 +168,5 @@ public class SerialPortComm {
 		}
 
 		return list;
-	}
-
-	// get name of pin
-	public static String getSerialPin(int pin) {
-		switch (pin) {
-		case 0:
-			return "DTR";
-		case 1:
-			return "RTS";
-		default:
-			return "unbekannt";
-		}
 	}
 }
