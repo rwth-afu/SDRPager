@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.TimerTask;
 
 public class Scheduler extends TimerTask {
-	public final static int MAXENCODETIME_100ms = 3;
+	public final static int MAXENCODETIME_100MS = 3;
 	public final static int TIMERCYCLE_MS = 10;
 
 	protected enum states {
@@ -28,7 +28,7 @@ public class Scheduler extends TimerTask {
 
 	// in general: delay in ms between "PTT On" and start of audio
 	// delay time (for serial / gpio) (countdown)
-	protected int TxDelay_ms = 0;
+	protected int txDelay_ms = 0;
 
 	// data list (codewords)
 	protected ArrayList<Integer> data;
@@ -61,23 +61,22 @@ public class Scheduler extends TimerTask {
 		this.time = ((int) (System.currentTimeMillis() / 100) + this.delay) % this.max;
 
 		// update GUI
-
 		if (Main.timeSlots.isSlotChanged(time)) {
 			// draw all slots
 			Main.drawSlots();
-        	char slot = Main.timeSlots.getCurrentSlotChar(time);
+			char slot = Main.timeSlots.getCurrentSlotChar(time);
 			log("Scheduler: Updating GUI, now slot " + String.valueOf(slot), Log.INFO);
 		}
 
 		switch (currentState) {
-            case WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED:
+			case WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED:
 				if (Main.timeSlots.isNextSlotAllowed(this.time) && (!Main.messageQueue.isEmpty())) {
 					// Get time left until next active slot will start
-                    int time_left_100ms = Main.timeSlots.getTimetoNextSlot(this.time);
-					// time_left_100ms contains now the time until next active slot in 0.1s
+					int timeLeft_100ms = Main.timeSlots.getTimeToNextSlot(this.time);
+					// timeLeft_100ms contains now the time until next active slot in 0.1s
 
 					// Check it now its time to encode?
-					if (time_left_100ms <= MAXENCODETIME_100ms) {
+					if (timeLeft_100ms <= MAXENCODETIME_100MS) {
 
 						// Just DEBUG
 						if (!Main.messageQueue.isEmpty()) {
@@ -101,7 +100,7 @@ public class Scheduler extends TimerTask {
 
 
 						// Get data from queue according to time slot count
-						if (PrepareData(allowedSlotsCount)) {
+						if (prepareData(allowedSlotsCount)) {
 
 							// convert data to a playable sound
 							soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
@@ -112,7 +111,6 @@ public class Scheduler extends TimerTask {
 					}
 				}
 				break;
-
 			case DATA_ENCODED:
 				// Current slot already given
 
@@ -124,7 +122,7 @@ public class Scheduler extends TimerTask {
 					if (Main.gpioPortComm != null) Main.gpioPortComm.setOn();
 
 					// Get current tx delay setting form config
-					this.TxDelay_ms = Main.config.getDelay();
+					this.txDelay_ms = Main.config.getDelay();
 
 					log("Scheduler: TX is now on, starting to wait Txdelay", Log.INFO);
 
@@ -133,9 +131,9 @@ public class Scheduler extends TimerTask {
 				break;
 			case WAITING_TX_DELAY:
 				// Decrease
-				TxDelay_ms -= TIMERCYCLE_MS;
+				txDelay_ms -= TIMERCYCLE_MS;
 				// If TXdelay is over...
-				if (TxDelay_ms <= 0) {
+				if (txDelay_ms <= 0) {
 					log("Scheduler: TX delay is over, play started", Log.INFO);
 
 					// play sound in new thread
@@ -143,40 +141,36 @@ public class Scheduler extends TimerTask {
 					this.currentState = states.CURRENTLY_TRANSMITTING;
 				}
 				break;
-
 			case CURRENTLY_TRANSMITTING:
-
 				break;
+			case CURRENT_SLOT_IS_STILL_ALLOWED:
+				// If we are still in an allowed slot
+				if (Main.timeSlots.isSlotAllowed(time)) {
 
-            case CURRENT_SLOT_IS_STILL_ALLOWED:
-                // If we are still in an allowed slot
-                if (Main.timeSlots.isSlotAllowed(time)) {
+					// if there is something to send
+					if (!Main.messageQueue.isEmpty()) {
+						log("Scheduler: Current slot still allowed, prepare data to be tranmitted", Log.INFO);
+						// Prepare transmitting
+						int currentSlot = Main.timeSlots.getCurrentSlot(this.time);
+						int allowedSlotsCount = Main.timeSlots.getAllowedSlotsInRow(currentSlot);
+						if (prepareData(allowedSlotsCount)) {
 
-                    // if there is something to send
-                    if (!Main.messageQueue.isEmpty()) {
-                        log("Scheduler: Current slot still allowed, prepare data to be tranmitted", Log.INFO);
-                        // Prepare transmitting
-                        int currentSlot = Main.timeSlots.getCurrentSlot(this.time);
-                        int allowedSlotsCount = Main.timeSlots.getAllowedSlotsInRow(currentSlot);
-                        if (PrepareData(allowedSlotsCount)) {
-
-                            // convert data to a playable sound
-                            soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
-                            log("Scheduler: Encoding done in current slot duration, state = DATA_ENCODED", Log.INFO);
-                            this.currentState = states.DATA_ENCODED;
-                        }
-                    }
-                } else {
-                    // Reset state machine
-                    this.currentState = states.WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED;
-                    log("Scheduler: Allowed slots left, resetting state machine", Log.INFO);
-                }
-
-                break;
+							// convert data to a playable sound
+							soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
+							log("Scheduler: Encoding done in current slot duration, state = DATA_ENCODED", Log.INFO);
+							this.currentState = states.DATA_ENCODED;
+						}
+					}
+				} else {
+					// Reset state machine
+					this.currentState = states.WAITING_FOR_NEXT_SLOT_TO_BE_ALLOWED;
+					log("Scheduler: Allowed slots left, resetting state machine", Log.INFO);
+				}
+				break;
 		} // switch
 	}
 
-	public void Notify_Audio_is_sent_completely() {
+	public void notifyAudioIsSentCompletely() {
 		// If Audio is sent, first
 
 		// turn transmitter off
@@ -193,14 +187,12 @@ public class Scheduler extends TimerTask {
 		}
 	}
 
-
 	// Prepare data depending on number of allowed slots
-	public boolean PrepareData(int slotCount) {
-
-        int NumberOfMessagesProcessed = 0;
+	public boolean prepareData(int slotCount) {
+		int NumberOfMessagesProcessed = 0;
 		// send batches
 		// max batches per slot: (slot time - preamble time) / bps / ((frames + (1 = sync)) * bits per frame)
-        // (6.4 - 0.48) * 1200 / ((16 + 1) * 32)
+		// (6.4 - 0.48) * 1200 / ((16 + 1) * 32)
 		int maxBatch = (int) ((((6.4 * slotCount) - 0.48 - (Main.config.getDelay() / 1000)) * 1200) / 544);
 
 		// create data
@@ -215,8 +207,8 @@ public class Scheduler extends TimerTask {
 		while (!Main.messageQueue.isEmpty()) {
 			// get message
 			Message message = Main.messageQueue.pop();
-            // Increase counter
-            NumberOfMessagesProcessed++;
+			// Increase counter
+			NumberOfMessagesProcessed++;
 
 			// get codewords and frame position
 			ArrayList<Integer> cwBuf = message.getCodeWords();
@@ -233,8 +225,8 @@ public class Scheduler extends TimerTask {
 				// push message back in queue (first position)
 				Main.messageQueue.addFirst(message);
 
-                // Decrease counter, as the last messaged processed did not fit
-                NumberOfMessagesProcessed--;
+				// Decrease counter, as the last messaged processed did not fit
+				NumberOfMessagesProcessed--;
 				break;
 			}
 
@@ -261,9 +253,9 @@ public class Scheduler extends TimerTask {
 			}
 		}
 
-		// infos about max batches
+		// info about max batches
 		log("Scheduler: # used batches (" + ((data.size() - 18) / 17) + " / " + maxBatch + ")", Log.INFO);
-        return (NumberOfMessagesProcessed > 0);
+		return (NumberOfMessagesProcessed > 0);
 	}
 
 	// get current time
@@ -273,6 +265,6 @@ public class Scheduler extends TimerTask {
 
 	// correct time by delay
 	public void correctTime(int delay) {
-        this.delay += delay;
+		this.delay += delay;
 	}
 }

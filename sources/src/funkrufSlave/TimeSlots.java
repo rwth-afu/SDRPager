@@ -6,8 +6,8 @@ public class TimeSlots {
 	// slot configuration
 	private boolean[] slots;
 
-    // lastTimeCheckedSlot
-	private int lasttimeCheckedSlot = -1;
+	// lastTimeCheckedSlot
+	private int lastTimeCheckedSlot = -1;
 
 	// constructor
 	public TimeSlots() {
@@ -25,8 +25,7 @@ public class TimeSlots {
 		}
 	}
 
-	public char iSlotTocSlot (int iSlot)
-	{
+	public char iSlotTocSlot(int iSlot) {
 		if (iSlot >= 0 && iSlot <= 16) {
 			return String.format("%1x", iSlot).charAt(0);
 		} else
@@ -34,8 +33,7 @@ public class TimeSlots {
 			return ' ';
 	}
 
-	public int cSlotToiSlot (char cSlot)
-	{
+	public int cSlotToiSlot(char cSlot) {
 		// char interpreted as hex to int
 		int iSlot = Integer.parseInt(cSlot + "", 16);
 		if (iSlot >= 0 && iSlot <= 16) {
@@ -45,8 +43,7 @@ public class TimeSlots {
 			return (-1);
 	}
 
-	public boolean isSlotAllowed(int iSlot)
-	{
+	public boolean isSlotAllowed(int iSlot) {
 		if (iSlot >= 0 && iSlot <= 16) {
 			return this.slots[iSlot];
 		} else {
@@ -54,7 +51,6 @@ public class TimeSlots {
 			return false;
 		}
 	}
-
 
 	// check if slot is allowed and count how many allowed slots are in a row
 	// (starting at given slot)
@@ -70,7 +66,6 @@ public class TimeSlots {
 		}
 		return count;
 	}
-
 
 	// get all allowed slots as string
 	public String getSlots() {
@@ -102,41 +97,41 @@ public class TimeSlots {
 		// time (in 0.1s), time per slot 6.4 s = 64 * 0.1s
 		// % 16 to warp around complete minutes, as there are 16 timeslots avaliable.
 
-        // **** IMPORTANT ****
+		// **** IMPORTANT ****
 
-        // This means 16 timeslots need 102.4 seconds, not 60.
+		// This means 16 timeslots need 102.4 seconds, not 60.
 		int slot = ((int) (time / 64)) % 16;
 		return slot;
 	}
 
-	public int getStartTimefromSlot(int slot, int time) {
-        int timeActualSlot = time % 1024;
-        return (int) (timeActualSlot + (slot * 64));
-    }
+	// BUG
+	public int getStartTimeFromSlot(int slot, int time) {
+		int wraparounds = (int) time / 1024;
+		return (int) ((wraparounds * 1024) + (slot * 64));
+	}
 
-    public int getEndTimefromSlot(int slot, int time) {
-        return (this.getStartTimefromSlot(slot, time) + 1024);
-    }
+	public int getEndTimeFromSlot(int slot, int time) {
+		return (this.getStartTimeFromSlot(slot, time) + 64);
+	}
 
-    public int getTimetoNextSlot(int time)
-    {
-        int NextSlot = (getCurrentSlot(time) + 1) % 16;
-        return (this.getStartTimefromSlot(NextSlot, time) - time);
-    }
+	public int getTimeToNextSlot(int time) {
+		int NextSlot = (getCurrentSlot(time) + 1) % 16;
+		return (time - this.getStartTimeFromSlot(NextSlot, time));
+	}
 
-    // check if given slot is last slot
+	// check if given slot is last slot
 	public boolean isSlotChanged(int time) {
-        int nowslot = getCurrentSlot(time);
-        if (nowslot == this.lasttimeCheckedSlot) {
-            return false;
-        } else {
-            this.lasttimeCheckedSlot = nowslot;
-            return true;
-        }
-    }
+		int nowSlot = getCurrentSlot(time);
+		if (nowSlot == this.lastTimeCheckedSlot) {
+			return false;
+		} else {
+			this.lastTimeCheckedSlot = nowSlot;
+			return true;
+		}
+	}
 
 	public boolean isNextSlotAllowed(int time) {
 		// Check if next slot is active
-		return this.isSlotAllowed((this.getCurrentSlot(time) + 1 ) % 16);
+		return this.isSlotAllowed((this.getCurrentSlot(time) + 1) % 16);
 	}
 }

@@ -40,7 +40,7 @@ public class AudioEncoder {
 					c.close();
 					e.getLine().close();
 
-					scheduler.Notify_Audio_is_sent_completely();
+					scheduler.notifyAudioIsSentCompletely();
 				}
 			});
 

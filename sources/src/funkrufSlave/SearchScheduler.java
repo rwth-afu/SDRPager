@@ -1,17 +1,14 @@
 package funkrufSlave;
 
-import java.util.ArrayList;
-
-public class SearchScheduler extends Scheduler {
+public class SearchScheduler {
 	// for first message (the correction should not be increased at first time)
 	private boolean firstTime = true;
 
-	public SearchScheduler(Log log) {
-		super(log);
+	public SearchScheduler() {
+
 	}
 
 	// "main"
-	@Override
 	public void run() {
 		/*// if active
 		if (active) {
@@ -61,7 +58,6 @@ public class SearchScheduler extends Scheduler {
 	}
 
 	// get data depending on slot count
-	@Override
 	public boolean PrepareData(int slotCount) {
 		/*this.serialDelay = Main.config.getDelay();
 
@@ -120,7 +116,7 @@ public class SearchScheduler extends Scheduler {
 	}
 
 	private void addMessage(Message message) {
-		// add sync-word (start of batch)
+	/*	// add sync-word (start of batch)
 		data.add(Pocsag.SYNC);
 
 		// get codewords of message
@@ -144,6 +140,6 @@ public class SearchScheduler extends Scheduler {
 		// fill last batch with idle-words
 		while ((data.size() - 18) % 17 != 0) {
 			data.add(Pocsag.IDLE);
-		}
+		}*/
 	}
 }
