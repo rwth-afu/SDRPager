@@ -9,6 +9,9 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.ssl.SslContext;
 
+/**
+ * This class initializes a new socket channel when a connection is accepted.
+ */
 final class ServerInitializer extends ChannelInitializer<SocketChannel> {
 
 	private static final StringEncoder encoder = new StringEncoder();
@@ -16,10 +19,24 @@ final class ServerInitializer extends ChannelInitializer<SocketChannel> {
 	private final ServerHandler handler;
 	private final SslContext sslContext;
 
+	/**
+	 * Constructs a new server initializer instance.
+	 * 
+	 * @param callbacks
+	 *            Callback provider
+	 */
 	public ServerInitializer(ServerCallbacks callbacks) {
 		this(null, callbacks);
 	}
 
+	/**
+	 * Constructs a new server initializer instance.
+	 * 
+	 * @param sslContext
+	 *            SSL context to use.
+	 * @param callbacks
+	 *            Callback provider.
+	 */
 	public ServerInitializer(SslContext sslContext, ServerCallbacks callbacks) {
 		this.sslContext = sslContext;
 		this.handler = new ServerHandler(callbacks);

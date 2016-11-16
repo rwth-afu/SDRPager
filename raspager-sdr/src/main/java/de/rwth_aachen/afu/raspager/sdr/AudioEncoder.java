@@ -8,6 +8,10 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.Mixer;
 
+/**
+ * This class contains the audio encoder that encodes code words into an audio
+ * clip which can be played by a sound card.
+ */
 final class AudioEncoder {
 	// 0-2 = begin, 4-36 = constant, 38-39 = end
 	private static final AudioFormat af48000 = new AudioFormat(48000, 16, 1, true, false);
@@ -15,6 +19,13 @@ final class AudioEncoder {
 	private Mixer.Info device = null;
 	private float correction = 0.0f;
 
+	/**
+	 * Constructs a new audio encoder using the given sound device.
+	 * 
+	 * @param soundDevice
+	 *            Name of the sound device to use. This must match the value
+	 *            returned by {@link Mixer.Info#getName() getName}.
+	 */
 	public AudioEncoder(String soundDevice) {
 		Mixer.Info[] soundDevices = AudioSystem.getMixerInfo();
 		for (Mixer.Info device : soundDevices) {
@@ -29,19 +40,45 @@ final class AudioEncoder {
 		}
 	}
 
+	/**
+	 * Gets the correction factor.
+	 * 
+	 * @return Correction factor.
+	 */
 	public float getCorrection() {
 		return correction;
 	}
 
+	/**
+	 * Sets the correction factor.
+	 * 
+	 * @param correction
+	 */
 	public void setCorrection(float correction) {
 		this.correction = correction;
 	}
 
+	/**
+	 * Encodes a list of code words into a byte array that can be send to the
+	 * soundcard.
+	 * 
+	 * @param data
+	 *            List of code words
+	 * @return Byte array containing the encoded data.
+	 */
 	public byte[] encode(List<Integer> data) {
-		return encode(getByteData(data), correction);
+		return encode(toByteArray(data), correction);
 	}
 
-	public void play(byte[] rawData) throws Exception {
+	/**
+	 * Plays the encoded data via the sound device.
+	 * 
+	 * @param data
+	 *            Data to play.
+	 * @throws Exception
+	 *             If an error occurred.
+	 */
+	public void play(byte[] data) throws Exception {
 		try (Clip c = AudioSystem.getClip(device)) {
 			/*
 			 * // === DOWNSAMPLING AUF 44100 Hz ===
@@ -59,7 +96,7 @@ final class AudioEncoder {
 			 */
 
 			// auskommentieren, falls Downsampling verwendet werden soll
-			c.open(af48000, rawData, 0, rawData.length);
+			c.open(af48000, data, 0, data.length);
 			c.addLineListener((e) -> {
 				if (e.getType() == LineEvent.Type.STOP) {
 					c.close();
@@ -77,19 +114,17 @@ final class AudioEncoder {
 		// 100 extra bytes to get the end data to be sent
 		byte[] data = new byte[40 * sample_size * inputData.length * 8 + 100];
 		int max = (int) Math.pow(2, af48000.getSampleSizeInBits()) / 2 - 1;
-		// System.out.println(max);
 
 		boolean lastHigh = false;
 		int value = 0;
 
-		// main loop through inputData-array
 		for (int i = 0; i < inputData.length; i++) {
-			// one byte containing 8 data bit to encode
+			// 0b1000 0000 Bit selection mask
+			int comp = 128;
 
-			int comp = 128; // 0b1000 0000 Bit selection mask
-
+			// one byte containing 8 data bits to encode
 			for (int j = 0; j < 8; j++) {
-				// J = Bit index in current byte of input data
+				// j = Bit index in current byte of input data
 
 				// one bit
 				// get index, which tells the start sample in audio sample array
@@ -120,7 +155,6 @@ final class AudioEncoder {
 
 				// first 3 bits
 				if (index == 0) {
-					// start
 					for (int l = 0; l <= 2; l++) {
 						value = (int) ((int) (bitChange[2 + l] * max) * f * correction);
 
@@ -187,13 +221,23 @@ final class AudioEncoder {
 		return data;
 	}
 
-	private static byte[] getByteData(List<Integer> data) {
+	/**
+	 * Converts the integer list into a byte array.
+	 * 
+	 * @param data
+	 *            Integer list
+	 * @return Byte array containing the integer data.
+	 */
+	private static byte[] toByteArray(List<Integer> data) {
 		byte[] byteData = new byte[data.size() * 4];
 
 		for (int i = 0; i < data.size(); i++) {
-			for (int c = 0; c < 4; c++) {
-				byteData[i * 4 + c] = (byte) (data.get(i) >>> (8 * (3 - c)));
-			}
+			int value = data.get(i);
+
+			byteData[i * 4] = (byte) (value >>> 24);
+			byteData[i * 4 + 1] = (byte) (value >>> 16);
+			byteData[i * 4 + 2] = (byte) (value >>> 8);
+			byteData[i * 4 + 3] = (byte) value;
 		}
 
 		return byteData;

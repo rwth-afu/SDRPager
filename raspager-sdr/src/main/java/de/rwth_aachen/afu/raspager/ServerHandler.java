@@ -7,6 +7,10 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+/**
+ * This class handles incoming packets like new messages to send from a client
+ * connection.
+ */
 @Sharable
 final class ServerHandler extends SimpleChannelInboundHandler<String> {
 

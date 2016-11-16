@@ -12,28 +12,61 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
+/**
+ * RasPager server implementation.
+ */
 final class Server implements Runnable {
 	private static final Logger log = Logger.getLogger(Server.class.getName());
 	private final Configuration config;
 	private final ServerCallbacks callbacks = new ServerCallbacks();
 	private ChannelFuture serverFuture;
 
+	/**
+	 * Constructs a new server instance.
+	 * 
+	 * @param config
+	 *            Configuration
+	 */
 	public Server(Configuration config) {
 		this.config = config;
 	}
 
+	/**
+	 * Sets the new message handler.
+	 * 
+	 * @param messageHandler
+	 *            Handler to use.
+	 */
 	public void setAddMessageHandler(Consumer<Message> messageHandler) {
 		callbacks.setAddMessageHandler(messageHandler);
 	}
 
+	/**
+	 * Sets the time correction handler.
+	 * 
+	 * @param timeCorrectionHandler
+	 *            Handler to use.
+	 */
 	public void setTimeCorrectionHandler(IntConsumer timeCorrectionHandler) {
 		callbacks.setTimeCorrectionHandler(timeCorrectionHandler);
 	}
 
+	/**
+	 * Sets the time slots handler.
+	 * 
+	 * @param timeSlotsHandler
+	 *            Handler to use.
+	 */
 	public void setTimeSlotsHandler(Consumer<String> timeSlotsHandler) {
 		callbacks.setTimeSlotsHandler(timeSlotsHandler);
 	}
 
+	/**
+	 * Sets the get time handler.
+	 * 
+	 * @param timeHandler
+	 *            Handler to use.
+	 */
 	public void setGetTimeHandler(IntSupplier timeHandler) {
 		callbacks.setTimeHandler(timeHandler);
 	}
@@ -62,6 +95,10 @@ final class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * Stops the server if running. This method will block until the server is
+	 * stopped.
+	 */
 	public void shutdown() {
 		try {
 			if (serverFuture != null) {
