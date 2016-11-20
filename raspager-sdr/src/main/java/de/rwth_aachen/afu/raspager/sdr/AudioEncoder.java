@@ -18,6 +18,7 @@ final class AudioEncoder {
 	private static final float[] bitChange = { -0.9f, -0.7f, 0.0f, 0.7f, 0.9f };
 	private Mixer.Info device = null;
 	private float correction = 0.0f;
+	private Object playMutex = new Object();
 
 	/**
 	 * Constructs a new audio encoder using the given sound device.
@@ -101,11 +102,23 @@ final class AudioEncoder {
 				if (e.getType() == LineEvent.Type.STOP) {
 					c.close();
 					e.getLine().close();
+
+					synchronized (playMutex) {
+						playMutex.notify();
+					}
 				}
 			});
 
 			c.start();
 			c.loop(0);
+
+			try {
+				synchronized (playMutex) {
+					playMutex.wait();
+				}
+			} catch (InterruptedException ex) {
+				throw ex;
+			}
 		}
 	}
 

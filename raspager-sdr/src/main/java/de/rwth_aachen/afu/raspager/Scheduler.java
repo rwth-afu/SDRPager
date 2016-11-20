@@ -9,6 +9,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 class Scheduler extends TimerTask {
+	protected enum State {
+		AWAITING_SLOT, DATA_ENCODED, SLOT_STILL_ALLOWED
+	}
+
 	private static final Logger log = Logger.getLogger(Scheduler.class.getName());
 	// max time value (2^16)
 	protected static final int MAX = 65536;
@@ -20,6 +24,7 @@ class Scheduler extends TimerTask {
 	protected int time = 0;
 	protected int delay = 0;
 	protected Consumer<TimeSlots> updateTimeSlotsHandler;
+	protected State state = State.AWAITING_SLOT;
 
 	public Scheduler(Deque<Message> messageQueue, Transmitter transmitter) {
 		this.messageQueue = messageQueue;
@@ -40,24 +45,25 @@ class Scheduler extends TimerTask {
 			updateTimeSlotsHandler.accept(slots);
 		}
 
-		if (slots.isNextSlotAllowed(time) && !messageQueue.isEmpty()) {
-			log.fine("Next slot will be active.");
-			int count = slots.getSlotCount(slot);
-			log.fine(String.format("Slot %c %d", slot, count));
-
-			List<Integer> data = getData(count);
-
-			try {
-				transmitter.send(data);
-			} catch (Throwable t) {
-				log.log(Level.SEVERE, "Failed to send data.", t);
-			} finally {
-				data = null;
-			}
+		switch (state) {
+		case AWAITING_SLOT:
+			break;
+		case DATA_ENCODED:
+			break;
+		case SLOT_STILL_ALLOWED:
+			break;
+		default:
+			log.log(Level.WARNING, "Unknown state {0}.", state);
 		}
 	}
 
-	// get data depending on slot count
+	/**
+	 * Gets data depending on the given slot count.
+	 * 
+	 * @param slotCount
+	 *            Slot count.
+	 * @return Code words to send.
+	 */
 	private List<Integer> getData(int slotCount) {
 		// send batches
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
@@ -128,12 +134,21 @@ class Scheduler extends TimerTask {
 		slots.setSlots(s);
 	}
 
-	// get current time
+	/**
+	 * Gets current time.
+	 * 
+	 * @return Current time.
+	 */
 	public int getTime() {
 		return time;
 	}
 
-	// correct time by delay
+	/**
+	 * Sets time correction.
+	 * 
+	 * @param delay
+	 *            Time correction.
+	 */
 	public void correctTime(int delay) {
 		this.delay += delay;
 	}

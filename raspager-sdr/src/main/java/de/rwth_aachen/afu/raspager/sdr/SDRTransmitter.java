@@ -59,14 +59,21 @@ public final class SDRTransmitter implements Transmitter {
 	}
 
 	@Override
-	public void send(List<Integer> data) throws Exception {
-		if (serial == null || gpio == null || encoder == null) {
-			throw new UnsupportedOperationException("Not initialized");
+	public byte[] encode(List<Integer> data) throws Exception {
+		if (encoder != null) {
+			return encoder.encode(data);
+		} else {
+			throw new IllegalStateException("Encoder not initialized.");
+		}
+	}
+
+	@Override
+	public void send(byte[] data) throws Exception {
+		if (serial == null || gpio == null) {
+			throw new IllegalStateException("Not initialized");
 		}
 
 		try {
-			byte[] enc = encoder.encode(data);
-
 			enable();
 
 			if (txDelay > 0) {
@@ -77,7 +84,7 @@ public final class SDRTransmitter implements Transmitter {
 				}
 			}
 
-			encoder.play(enc);
+			encoder.play(data);
 		} finally {
 			disable();
 		}
