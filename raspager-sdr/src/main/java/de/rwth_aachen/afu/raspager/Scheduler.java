@@ -25,6 +25,8 @@ class Scheduler extends TimerTask {
 	protected int delay = 0;
 	protected Consumer<TimeSlots> updateTimeSlotsHandler;
 	protected State state = State.AWAITING_SLOT;
+	protected List<Integer> codeWords;
+	protected byte[] rawData;
 
 	public Scheduler(Deque<Message> messageQueue, Transmitter transmitter) {
 		this.messageQueue = messageQueue;
@@ -39,18 +41,35 @@ class Scheduler extends TimerTask {
 	public void run() {
 		time = ((int) (System.currentTimeMillis() / 100) + delay) % MAX;
 
-		char slot = TimeSlots.getCurrentSlot(time);
-		if (!slots.isLastSlot(slot) && updateTimeSlotsHandler != null) {
+		if (slots.hasChanged(time) && updateTimeSlotsHandler != null) {
 			log.fine("Updating time slots.");
 			updateTimeSlotsHandler.accept(slots);
 		}
 
 		switch (state) {
 		case AWAITING_SLOT:
+			if (slots.isNextAllowed(time) && !messageQueue.isEmpty()) {
+
+			}
 			break;
 		case DATA_ENCODED:
+			if (slots.get(TimeSlots.getIndex(time))) {
+				log.fine("Activating transmitter.");
+				try {
+					transmitter.send(rawData);
+				} catch (Throwable t) {
+					log.log(Level.SEVERE, "Failed to send data.", t);
+				} finally {
+					state = State.SLOT_STILL_ALLOWED;
+				}
+			}
 			break;
 		case SLOT_STILL_ALLOWED:
+			if (slots.isAllowed(time)) {
+
+			} else {
+				state = State.AWAITING_SLOT;
+			}
 			break;
 		default:
 			log.log(Level.WARNING, "Unknown state {0}.", state);
@@ -64,18 +83,18 @@ class Scheduler extends TimerTask {
 	 *            Slot count.
 	 * @return Code words to send.
 	 */
-	private List<Integer> getData(int slotCount) {
+	private void updateData(int slotCount) {
 		// send batches
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
 		// (1 = sync)) * bits per frame)
 		// (3,75 - 0,48) * 1200 / ((16 + 1) * 32)
 		int maxBatch = (int) ((6.40 * slotCount - 0.48 - delay / 1000) * 1200 / 544);
 
-		List<Integer> data = new ArrayList<>();
+		codeWords = new ArrayList<>();
 
 		// add praeembel
 		for (int i = 0; i < 18; i++) {
-			data.add(Pocsag.PRAEAMBLE);
+			codeWords.add(Pocsag.PRAEAMBLE);
 		}
 
 		while (!messageQueue.isEmpty()) {
@@ -92,38 +111,36 @@ class Scheduler extends TimerTask {
 			// also Batches NACH hinzufügen > maxBatches, dann keine neue
 			// Nachricht holen
 			// if count of batches + this message is greater than max batches
-			if (((data.size() - 18) / 17 + (cwCount + 2 * framePos) / 16 + 1) > maxBatch) {
+			if (((codeWords.size() - 18) / 17 + (cwCount + 2 * framePos) / 16 + 1) > maxBatch) {
 				messageQueue.addFirst(message);
 				break;
 			}
 
 			// each batch starts with a sync code word
-			data.add(Pocsag.SYNC);
+			codeWords.add(Pocsag.SYNC);
 
 			// add idle code words until frame position is reached
 			for (int c = 0; c < framePos; c++) {
-				data.add(Pocsag.IDLE);
-				data.add(Pocsag.IDLE);
+				codeWords.add(Pocsag.IDLE);
+				codeWords.add(Pocsag.IDLE);
 			}
 
 			// add actual payload
 			for (int c = 1; c < cwBuf.size(); c++) {
-				if ((data.size() - 18) % 17 == 0) {
-					data.add(Pocsag.SYNC);
+				if ((codeWords.size() - 18) % 17 == 0) {
+					codeWords.add(Pocsag.SYNC);
 				}
 
-				data.add(cwBuf.get(c));
+				codeWords.add(cwBuf.get(c));
 			}
 
 			// fill batch with idle-words
-			while ((data.size() - 18) % 17 != 0) {
-				data.add(Pocsag.IDLE);
+			while ((codeWords.size() - 18) % 17 != 0) {
+				codeWords.add(Pocsag.IDLE);
 			}
 		}
 
-		log.fine(String.format("Batches used: {0}/{1}", ((data.size() - 18) / 17), maxBatch));
-
-		return data;
+		log.fine(String.format("Batches used: {0}/{1}", ((codeWords.size() - 18) / 17), maxBatch));
 	}
 
 	public TimeSlots getSlots() {

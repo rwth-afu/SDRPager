@@ -3,7 +3,7 @@ package de.rwth_aachen.afu.raspager;
 final class TimeSlots {
 
 	private final boolean[] slots = new boolean[16];
-	private char lastSlot = ' ';
+	private int lastSlotIndex = -1;
 
 	/**
 	 * Sets active slots based on string representation.
@@ -30,11 +30,8 @@ final class TimeSlots {
 	 *            Slot to check.
 	 * @return Number of active slots.
 	 */
-	public synchronized int getSlotCount(char cs) {
-		int c = getSlotCount(Character.digit(cs, 16));
-		lastSlot = cs;
-
-		return c;
+	public synchronized int getCount(char cs) {
+		return getCount(Character.digit(cs, 16));
 	}
 
 	/**
@@ -44,7 +41,7 @@ final class TimeSlots {
 	 *            Slot to check.
 	 * @return Number of active slots.
 	 */
-	public synchronized int getSlotCount(int slot) {
+	public synchronized int getCount(int slot) {
 		int count = 0;
 
 		for (int i = slot; slots[i % 16] && (i < slot + 16); ++i) {
@@ -72,25 +69,42 @@ final class TimeSlots {
 	}
 
 	/**
-	 * Returns the value of the given slot.
+	 * Gets the value of a slot.
 	 * 
 	 * @param index
 	 *            Slot index (smaller than 16).
 	 * @return Status of the slot at the given index.
 	 */
-	public synchronized boolean getSlot(int index) {
+	public synchronized boolean get(int index) {
 		return slots[index % 16];
 	}
 
 	/**
-	 * Checks if the given slot number is the last slot.
+	 * Checks if the current slot is allowed.
 	 * 
-	 * @param cs
-	 *            Slot number
+	 * @param time
+	 *            Time
+	 * @return True if the slot is allowed.
+	 */
+	public boolean isAllowed(int time) {
+		return get(getIndex(time));
+	}
+
+	/**
+	 * Checks if the slot has changed.
+	 * 
+	 * @param time
+	 *            Current time
 	 * @return True if the given slot number is the last slot.
 	 */
-	public synchronized boolean isLastSlot(char cs) {
-		return lastSlot == cs;
+	public synchronized boolean hasChanged(int time) {
+		int slot = getIndex(time);
+		if (lastSlotIndex == slot) {
+			return false;
+		} else {
+			lastSlotIndex = slot;
+			return true;
+		}
 	}
 
 	/**
@@ -100,8 +114,8 @@ final class TimeSlots {
 	 *            Time
 	 * @return True if the next slot will be active.
 	 */
-	public synchronized boolean isNextSlotAllowed(int time) {
-		return getSlot(getCurrentSlot(time) + 1);
+	public synchronized boolean isNextAllowed(int time) {
+		return get(getCurrent(time) + 1);
 	}
 
 	/**
@@ -111,8 +125,8 @@ final class TimeSlots {
 	 *            Time value
 	 * @return Current slot as hex number.
 	 */
-	public static char getCurrentSlot(int time) {
-		return Character.forDigit(getSlotIndex(time), 16);
+	public static char getCurrent(int time) {
+		return Character.forDigit(getIndex(time), 16);
 	}
 
 	/**
@@ -122,7 +136,7 @@ final class TimeSlots {
 	 *            Time value.
 	 * @return Slot index.
 	 */
-	public static int getSlotIndex(int time) {
+	public static int getIndex(int time) {
 		// time (in 0.1s), time per slot 6.4 s = 64 * 0.1s
 		// % 16 to warp around complete minutes, as there are 16 timeslots
 		// avaliable.
@@ -142,7 +156,7 @@ final class TimeSlots {
 	}
 
 	public static int getTimeToNextSlot(int time) {
-		int nextSlot = (getCurrentSlot(time) + 1) % 16;
+		int nextSlot = (getCurrent(time) + 1) % 16;
 		return (getStartTimeForSlot(nextSlot, time) - time);
 	}
 

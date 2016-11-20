@@ -100,11 +100,13 @@ final class AudioEncoder {
 			c.open(af48000, data, 0, data.length);
 			c.addLineListener((e) -> {
 				if (e.getType() == LineEvent.Type.STOP) {
-					c.close();
-					e.getLine().close();
-
-					synchronized (playMutex) {
-						playMutex.notify();
+					try {
+						c.close();
+						e.getLine().close();
+					} finally {
+						synchronized (playMutex) {
+							playMutex.notify();
+						}
 					}
 				}
 			});

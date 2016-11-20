@@ -305,7 +305,7 @@ public class RasPagerWindow extends JFrame {
 					Color color = g.getColor();
 
 					// if this is allowed slot
-					if (timeSlots.getSlot(i)) {
+					if (timeSlots.get(i)) {
 						// change font and color
 						g.setFont(new Font(font.getFontName(), Font.BOLD, font.getSize()));
 						g.setColor(Color.green);
