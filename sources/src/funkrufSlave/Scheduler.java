@@ -149,7 +149,7 @@ public class Scheduler extends TimerTask {
 
 					// if there is something to send
 					if (!Main.messageQueue.isEmpty()) {
-						log("Scheduler: Current slot still allowed, prepare data to be tranmitted", Log.INFO);
+						log("Scheduler: Current slot still allowed, prepare data to be transmitted", Log.INFO);
 						// Prepare transmitting
 						int currentSlot = Main.timeSlots.getCurrentSlot(this.time);
 						int allowedSlotsCount = Main.timeSlots.getAllowedSlotsInRow(currentSlot);
@@ -158,6 +158,7 @@ public class Scheduler extends TimerTask {
 							// convert data to a playable sound
 							soundData = AudioEncoder.encode(AudioEncoder.getByteData(this.data));
 							log("Scheduler: Encoding done in current slot duration, state = DATA_ENCODED", Log.INFO);
+
 							this.currentState = states.DATA_ENCODED;
 						}
 					}
@@ -188,8 +189,8 @@ public class Scheduler extends TimerTask {
 	}
 
 	// Prepare data depending on number of allowed slots
-	public boolean prepareData(int slotCount) {
-		int NumberOfMessagesProcessed = 0;
+	private boolean prepareData(int slotCount) {
+		int numberOfMessagesProcessed = 0;
 		// send batches
 		// max batches per slot: (slot time - preamble time) / bps / ((frames + (1 = sync)) * bits per frame)
 		// (6.4 - 0.48) * 1200 / ((16 + 1) * 32)
@@ -208,7 +209,7 @@ public class Scheduler extends TimerTask {
 			// get message
 			Message message = Main.messageQueue.pop();
 			// Increase counter
-			NumberOfMessagesProcessed++;
+			numberOfMessagesProcessed++;
 
 			// get codewords and frame position
 			ArrayList<Integer> cwBuf = message.getCodeWords();
@@ -226,7 +227,7 @@ public class Scheduler extends TimerTask {
 				Main.messageQueue.addFirst(message);
 
 				// Decrease counter, as the last messaged processed did not fit
-				NumberOfMessagesProcessed--;
+				numberOfMessagesProcessed--;
 				break;
 			}
 
@@ -255,7 +256,7 @@ public class Scheduler extends TimerTask {
 
 		// info about max batches
 		log("Scheduler: # used batches (" + ((data.size() - 18) / 17) + " / " + maxBatch + ")", Log.INFO);
-		return (NumberOfMessagesProcessed > 0);
+		return (numberOfMessagesProcessed > 0);
 	}
 
 	// get current time
