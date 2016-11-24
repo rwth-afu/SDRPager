@@ -16,6 +16,8 @@ class Scheduler extends TimerTask {
 	private static final Logger log = Logger.getLogger(Scheduler.class.getName());
 	// max time value (2^16)
 	protected static final int MAX = 65536;
+	protected static final int MAX_ENCODE_TIME_100MS = 3;
+	protected static final int TIMERCYCLE_MS = 10;
 
 	protected final TimeSlots slots = new TimeSlots();
 	protected final Deque<Message> messageQueue;
@@ -48,31 +50,65 @@ class Scheduler extends TimerTask {
 
 		switch (state) {
 		case AWAITING_SLOT:
-			if (slots.isNextAllowed(time) && !messageQueue.isEmpty()) {
-
-			}
+			encodeData();
 			break;
 		case DATA_ENCODED:
-			if (slots.get(TimeSlots.getIndex(time))) {
-				log.fine("Activating transmitter.");
-				try {
-					transmitter.send(rawData);
-				} catch (Throwable t) {
-					log.log(Level.SEVERE, "Failed to send data.", t);
-				} finally {
-					state = State.SLOT_STILL_ALLOWED;
-				}
-			}
+			sendData();
 			break;
 		case SLOT_STILL_ALLOWED:
-			if (slots.isAllowed(time)) {
-
-			} else {
-				state = State.AWAITING_SLOT;
-			}
+			stillAllowed();
 			break;
 		default:
 			log.log(Level.WARNING, "Unknown state {0}.", state);
+		}
+	}
+
+	private void encodeData() {
+		try {
+			if (slots.isNextAllowed(time) && !messageQueue.isEmpty()
+					&& TimeSlots.getTimeToNextSlot(time) <= MAX_ENCODE_TIME_100MS) {
+				int nextAllowed = TimeSlots.getNextIndex(time);
+				int allowedCount = slots.getCount(nextAllowed);
+
+				if (updateData(allowedCount)) {
+					rawData = transmitter.encode(codeWords);
+					this.state = State.DATA_ENCODED;
+				}
+			}
+		} catch (Throwable t) {
+			log.log(Level.SEVERE, "Failed to encode data.", t);
+		}
+	}
+
+	private void sendData() {
+		if (slots.get(TimeSlots.getIndex(time))) {
+			log.fine("Activating transmitter.");
+			try {
+				transmitter.send(rawData);
+			} catch (Throwable t) {
+				log.log(Level.SEVERE, "Failed to send data.", t);
+			} finally {
+				state = State.SLOT_STILL_ALLOWED;
+			}
+		}
+	}
+
+	private void stillAllowed() {
+		try {
+			if (slots.isAllowed(time) && !messageQueue.isEmpty()) {
+				int currentSlot = TimeSlots.getIndex(time);
+				int count = slots.getCount(currentSlot);
+
+				if (updateData(count)) {
+					rawData = transmitter.encode(codeWords);
+					state = State.DATA_ENCODED;
+				}
+			} else {
+				state = State.AWAITING_SLOT;
+			}
+		} catch (Throwable t) {
+			log.log(Level.SEVERE, "Failed to encode data.", t);
+			state = State.AWAITING_SLOT;
 		}
 	}
 
@@ -83,12 +119,13 @@ class Scheduler extends TimerTask {
 	 *            Slot count.
 	 * @return Code words to send.
 	 */
-	private void updateData(int slotCount) {
+	private boolean updateData(int slotCount) {
 		// send batches
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
 		// (1 = sync)) * bits per frame)
 		// (3,75 - 0,48) * 1200 / ((16 + 1) * 32)
 		int maxBatch = (int) ((6.40 * slotCount - 0.48 - delay / 1000) * 1200 / 544);
+		int msgCount = 0;
 
 		codeWords = new ArrayList<>();
 
@@ -116,6 +153,8 @@ class Scheduler extends TimerTask {
 				break;
 			}
 
+			++msgCount;
+
 			// each batch starts with a sync code word
 			codeWords.add(Pocsag.SYNC);
 
@@ -141,6 +180,8 @@ class Scheduler extends TimerTask {
 		}
 
 		log.fine(String.format("Batches used: {0}/{1}", ((codeWords.size() - 18) / 17), maxBatch));
+
+		return msgCount > 0;
 	}
 
 	public TimeSlots getSlots() {

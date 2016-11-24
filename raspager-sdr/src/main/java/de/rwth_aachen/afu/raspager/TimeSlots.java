@@ -147,6 +147,10 @@ final class TimeSlots {
 		return ((int) (time / 64)) % 16;
 	}
 
+	public static int getNextIndex(int time) {
+		return (getIndex(time) + 1) % 16;
+	}
+
 	public static int getStartTimeForSlot(int slot, int time) {
 		return ((time % 1024) + (slot * 64));
 	}

@@ -68,7 +68,7 @@ final class RasPagerService {
 		}
 
 		if (searching) {
-			scheduler = new SearchScheduler(config, messages, transmitter);
+			scheduler = new SearchScheduler(config, messages, this);
 		} else {
 			scheduler = new Scheduler(messages, transmitter);
 		}
@@ -214,5 +214,10 @@ final class RasPagerService {
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to close transmitter.", t);
 		}
+	}
+
+	public RasPagerWindow getWindow() {
+		// TODO replace
+		return window;
 	}
 }

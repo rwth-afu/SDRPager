@@ -81,21 +81,6 @@ final class AudioEncoder {
 	 */
 	public void play(byte[] data) throws Exception {
 		try (Clip c = AudioSystem.getClip(device)) {
-			/*
-			 * // === DOWNSAMPLING AUF 44100 Hz ===
-			 * 
-			 * // Original inputData / soundData AudioInputStream
-			 * audioInputStream = new AudioInputStream(new
-			 * ByteArrayInputStream(soundData), af48000, soundData.length);
-			 * 
-			 * // Obtains an audio input stream of the indicated format, by
-			 * converting the provided audio input stream. AudioInputStream
-			 * inputStream = AudioSystem.getAudioInputStream(new
-			 * AudioFormat(44100, 16, 1, true, false), audioInputStream);
-			 * 
-			 * c.open(inputStream);
-			 */
-
 			// auskommentieren, falls Downsampling verwendet werden soll
 			c.open(af48000, data, 0, data.length);
 			c.addLineListener((e) -> {
