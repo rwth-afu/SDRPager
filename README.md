@@ -1,7 +1,3 @@
-This is the refactoring branch and work in progress, therefore it may contain
-tons of bugs. Note that the information provided below is likely to be outdated
-and will be updated once the refactoring is completed.
-
 # SDRPager
 POCSAG pager software based on soundcard generation of baseband signal
 
