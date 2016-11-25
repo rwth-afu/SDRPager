@@ -1,59 +1,29 @@
 package de.rwth_aachen.afu.raspager;
 
+import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
+
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
-
 class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
 	private final RasPagerService service;
 	private List<Integer> data;
 
-	public SearchScheduler(Configuration config, Deque<Message> messageQueue, RasPagerService service) {
+	public SearchScheduler(Deque<Message> messageQueue, RasPagerService service) {
 		super(messageQueue, service.getTransmitter());
-
 		this.service = service;
 	}
 
 	@Override
 	public void run() {
-		// still get local time in 0.1s, add (or sub) correction (here: delay)
-		// from master,
-		// and take lowest 16 bits (this.max)
-		time = ((int) (System.currentTimeMillis() / 100) + delay) % MAX;
-
-		if (slots.hasChanged(time) && updateTimeSlotsHandler != null) {
-			log.fine("Updating time slots.");
-			updateTimeSlotsHandler.accept(slots);
-		}
-
-		switch (state) {
-		case AWAITING_SLOT:
-			encodeData();
-			break;
-		case DATA_ENCODED:
-			sendData();
-			break;
-		case SLOT_STILL_ALLOWED:
-			stillAllowed();
-			break;
-		default:
-			log.log(Level.WARNING, "Unknown state {0}.", state);
-		}
-	}
-
-	private void encodeData() {
 		try {
-			if (slots.isNextAllowed(time) && !messageQueue.isEmpty()
-					&& TimeSlots.getTimeToNextSlot(time) <= MAX_ENCODE_TIME_100MS) {
-				if (updateData()) {
-					rawData = transmitter.encode(codeWords);
-					this.state = State.DATA_ENCODED;
-				}
+			if (updateData()) {
+				rawData = transmitter.encode(codeWords);
+				sendData();
 			}
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to encode data.", t);
@@ -61,31 +31,11 @@ class SearchScheduler extends Scheduler {
 	}
 
 	private void sendData() {
-		if (slots.get(TimeSlots.getIndex(time))) {
-			log.fine("Activating transmitter.");
-			try {
-				transmitter.send(rawData);
-			} catch (Throwable t) {
-				log.log(Level.SEVERE, "Failed to send data.", t);
-			} finally {
-				state = State.SLOT_STILL_ALLOWED;
-			}
-		}
-	}
-
-	private void stillAllowed() {
+		log.fine("Activating transmitter.");
 		try {
-			if (slots.isAllowed(time) && !messageQueue.isEmpty()) {
-				if (updateData()) {
-					rawData = transmitter.encode(codeWords);
-					state = State.DATA_ENCODED;
-				}
-			} else {
-				state = State.AWAITING_SLOT;
-			}
+			transmitter.send(rawData);
 		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to encode data.", t);
-			state = State.AWAITING_SLOT;
+			log.log(Level.SEVERE, "Failed to send data.", t);
 		}
 	}
 
@@ -124,8 +74,7 @@ class SearchScheduler extends Scheduler {
 		addMessage(new Message(("#00 5:1:9C8:0:000000   010112").split(":")));
 
 		if (!addr.isEmpty()) {
-			String[] parts = new String[] { "#00 6", "1", addr, "3",
-					String.format("correction=%+4.2f", sdr.getCorrection()) };
+			String[] parts = new String[]{"#00 6", "1", addr, "3", String.format("correction=%+4.2f", sdr.getCorrection())};
 			addMessage(new Message(parts));
 		}
 
@@ -148,9 +97,7 @@ class SearchScheduler extends Scheduler {
 
 		// add codewords of message
 		for (int c = 1; c < cwBuf.size(); c++) {
-			if ((data.size() - 18) % 17 == 0)
-				data.add(Pocsag.SYNC);
-
+			if ((data.size() - 18) % 17 == 0) data.add(Pocsag.SYNC);
 			data.add(cwBuf.get(c));
 		}
 

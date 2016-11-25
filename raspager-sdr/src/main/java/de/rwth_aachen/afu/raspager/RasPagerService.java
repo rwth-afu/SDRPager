@@ -67,8 +67,10 @@ final class RasPagerService {
 			return;
 		}
 
+		int period = 100;
 		if (searching) {
-			scheduler = new SearchScheduler(config, messages, this);
+			scheduler = new SearchScheduler(messages, this);
+			period = 5000;
 		} else {
 			scheduler = new Scheduler(messages, transmitter);
 		}
@@ -77,7 +79,7 @@ final class RasPagerService {
 			scheduler.setUpdateTimeSlotsHandler(window::updateTimeSlots);
 		}
 
-		timer.schedule(scheduler, 100, 100);
+		timer.schedule(scheduler, 100, period);
 	}
 
 	public void stopScheduler() {
