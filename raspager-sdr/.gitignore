@@ -6,5 +6,5 @@
 .settings/
 
 # Ignore IntelliJ project files
-#.idea/
-#raspager-sdr.iml
+.idea/
+raspager-sdr.iml
