@@ -837,7 +837,7 @@ public class RasPagerWindow extends JFrame {
 
 		// load masters
 		masterList.removeAll();
-		String value = config.getString(ConfigKeys.NET_MASTERS);
+		String value = config.getString(ConfigKeys.NET_MASTERS, null);
 		if (value != null && !value.isEmpty()) {
 			Arrays.stream(value.split(" +")).forEach((m) -> masterList.add(m));
 		}
@@ -881,7 +881,7 @@ public class RasPagerWindow extends JFrame {
 			serialPin.setEnabled(false);
 		}
 
-		value = config.getString(ConfigKeys.GPIO_RASPI_REV);
+		value = config.getString(ConfigKeys.GPIO_RASPI_REV, null);
 		if (value != null) {
 			BoardType type = BoardType.valueOf(value);
 			raspiList.setSelectedItem(type.toString());
@@ -890,10 +890,10 @@ public class RasPagerWindow extends JFrame {
 				gpioList.addItem(p.getName());
 			}
 
-			gpioList.setSelectedItem(config.getString(ConfigKeys.GPIO_PIN));
+			gpioList.setSelectedItem(config.getString(ConfigKeys.GPIO_PIN, null));
 		}
 
-		soundDeviceList.setSelectedItem(config.getString(ConfigKeys.SDR_DEVICE));
+		soundDeviceList.setSelectedItem(config.getString(ConfigKeys.SDR_DEVICE, null));
 
 		updateCorrection();
 	}

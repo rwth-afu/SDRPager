@@ -79,6 +79,12 @@ final class RasPagerService {
 			scheduler.setUpdateTimeSlotsHandler(window::updateTimeSlots);
 		}
 
+		if (server != null) {
+			server.getJob().setGetTimeHandler(scheduler::getTime);
+			server.getJob().setTimeCorrectionHandler(scheduler::correctTime);
+			server.getJob().setTimeSlotsHandler(scheduler::setTimeSlots);
+		}
+
 		timer.schedule(scheduler, 100, period);
 	}
 
@@ -102,9 +108,6 @@ final class RasPagerService {
 			Server srv = new Server(config);
 			// Register event handlers
 			srv.setAddMessageHandler(messages::push);
-			srv.setGetTimeHandler(scheduler::getTime);
-			srv.setTimeCorrectionHandler(scheduler::correctTime);
-			srv.setTimeSlotsHandler(scheduler::setTimeSlots);
 			// Create new server thread
 			server = new ThreadWrapper<Server>(srv);
 		}

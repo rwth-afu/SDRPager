@@ -77,8 +77,9 @@ public final class Main {
 			String configFile = line.getOptionValue('c', "raspager.properties");
 			config.load(configFile);
 		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to load configuration file.", t);
-			return false;
+			log.log(Level.WARNING, "Failed to load configuration file.", t);
+			// Continue without loading the configuration file.
+			// return false;
 		}
 
 		return true;
