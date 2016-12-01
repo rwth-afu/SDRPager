@@ -217,6 +217,8 @@ final class RasPagerService {
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to close transmitter.", t);
 		}
+
+		timer.cancel();
 	}
 
 	public RasPagerWindow getWindow() {
