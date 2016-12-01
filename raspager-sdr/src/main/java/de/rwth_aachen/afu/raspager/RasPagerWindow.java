@@ -17,8 +17,6 @@ import java.awt.Rectangle;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -671,22 +669,19 @@ public class RasPagerWindow extends JFrame {
 			}
 		});
 
-		radioUseSerial.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (radioUseSerial.isSelected()) {
-					radioUseSerial.setEnabled(false);
-					radioUseGpio.setEnabled(true);
-					radioUseGpio.setSelected(false);
-					serialPanel.setEnabled(true);
-					gpioPanel.setEnabled(false);
-					serialPortList.setEnabled(true);
-					serialPin.setEnabled(true);
+		radioUseSerial.addActionListener((e) -> {
+			if (radioUseSerial.isSelected()) {
+				radioUseSerial.setEnabled(false);
+				radioUseGpio.setEnabled(true);
+				radioUseGpio.setSelected(false);
+				serialPanel.setEnabled(true);
+				gpioPanel.setEnabled(false);
+				serialPortList.setEnabled(true);
+				serialPin.setEnabled(true);
 
-					raspiList.setEnabled(false);
-					gpioList.setEnabled(false);
-					btnGpioPins.setEnabled(false);
-				}
+				raspiList.setEnabled(false);
+				gpioList.setEnabled(false);
+				btnGpioPins.setEnabled(false);
 			}
 		});
 
