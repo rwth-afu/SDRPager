@@ -152,7 +152,7 @@ public final class Configuration {
 	}
 
 	/**
-	 * Sets a string value. If value is {@code null} the key is removed.
+	 * Sets a string value.
 	 * 
 	 * @param key
 	 *            Configuration key.
@@ -160,11 +160,11 @@ public final class Configuration {
 	 *            Value to set.
 	 */
 	public void setString(String key, String value) {
-		if (value != null) {
-			props.setProperty(key, value);
-		} else {
-			remove(key);
-		}
+		// if (value != null) {
+		props.setProperty(key, value);
+		// } else {
+		// remove(key);
+		// }
 	}
 
 	/**

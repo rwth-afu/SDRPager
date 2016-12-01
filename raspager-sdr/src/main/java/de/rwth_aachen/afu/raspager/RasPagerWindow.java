@@ -814,7 +814,11 @@ public class RasPagerWindow extends JFrame {
 
 		config.setBoolean(ConfigKeys.INVERT, invert.isSelected());
 		config.setInt(ConfigKeys.TX_DELAY, Integer.parseInt(delay.getText()));
-		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
+
+		if (soundDeviceList.getSelectedItem() != null) {
+			config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
+		}
+
 		config.setFloat(ConfigKeys.SDR_CORRECTION, correctionSlider.getValue() / 100.0f);
 
 		if (app.isRunning()) {
