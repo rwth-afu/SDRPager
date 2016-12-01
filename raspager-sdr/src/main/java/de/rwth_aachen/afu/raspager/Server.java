@@ -11,6 +11,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.ipfilter.RuleBasedIpFilter;
 
 /**
  * RasPager server implementation.
@@ -82,6 +83,7 @@ final class Server implements Runnable {
 			ServerInitializer handler = new ServerInitializer(callbacks);
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup);
+			b.handler(new RuleBasedIpFilter(new MasterServerFilter(config)));
 			b.channel(NioServerSocketChannel.class);
 			b.childHandler(handler);
 			serverFuture = b.bind(port).sync();

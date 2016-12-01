@@ -56,7 +56,7 @@ public final class SDRTransmitter implements Transmitter {
 
 		// TODO DEBUG -- REMOVE
 		String device = config.getString("sdr.device");
-		log.log(Level.INFO, "Audio device: {0}", device);
+		log.log(Level.FINE, "Audio device: {0}", device);
 		encoder = new AudioEncoder(device);
 		encoder.setCorrection(config.getFloat("sdr.correction", 0.0f));
 	}

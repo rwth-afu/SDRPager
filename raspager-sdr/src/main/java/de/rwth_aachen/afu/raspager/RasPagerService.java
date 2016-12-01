@@ -89,8 +89,6 @@ final class RasPagerService {
 	}
 
 	public void stopScheduler() {
-		timer.cancel();
-
 		if (scheduler != null) {
 			scheduler.cancel();
 			scheduler = null;
