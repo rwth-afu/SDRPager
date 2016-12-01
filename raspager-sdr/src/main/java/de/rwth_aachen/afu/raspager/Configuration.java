@@ -262,7 +262,19 @@ public final class Configuration {
 	}
 
 	/**
-	 * Gets a float from the configuration file.
+	 * Sets a float value.
+	 * 
+	 * @param key
+	 *            Configuration key.
+	 * @param value
+	 *            Value to set.
+	 */
+	public void setFloat(String key, float value) {
+		props.setProperty(key, Float.toString(value));
+	}
+
+	/**
+	 * Gets a double from the configuration file.
 	 * 
 	 * @param key
 	 *            Configuration key.
@@ -300,5 +312,17 @@ public final class Configuration {
 		} else {
 			return defaultValue;
 		}
+	}
+
+	/**
+	 * Sets a double value.
+	 * 
+	 * @param key
+	 *            Configuration key.
+	 * @param value
+	 *            Value to set.
+	 */
+	public void setDouble(String key, double value) {
+		props.setProperty(key, Double.toString(value));
 	}
 }

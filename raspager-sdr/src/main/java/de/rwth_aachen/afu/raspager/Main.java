@@ -1,5 +1,6 @@
 package de.rwth_aachen.afu.raspager;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -76,9 +77,11 @@ public final class Main {
 		try {
 			String configFile = line.getOptionValue('c', "raspager.properties");
 			config.load(configFile);
+		} catch (FileNotFoundException ex) {
+			log.log(Level.WARNING, "Failed to load configuration: {0}", ex.getMessage());
 		} catch (Throwable t) {
-			log.log(Level.WARNING, "Failed to load configuration file.", t);
-			// Continue without loading the configuration file.
+			log.log(Level.SEVERE, "Failed to load configuration.", t);
+			// TODO Abort on error?
 			// return false;
 		}
 

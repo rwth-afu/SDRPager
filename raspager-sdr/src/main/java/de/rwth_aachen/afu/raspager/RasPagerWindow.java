@@ -819,6 +819,7 @@ public class RasPagerWindow extends JFrame {
 		config.setBoolean(ConfigKeys.INVERT, invert.isSelected());
 		config.setInt(ConfigKeys.TX_DELAY, Integer.parseInt(delay.getText()));
 		config.setString(ConfigKeys.SDR_DEVICE, soundDeviceList.getSelectedItem().toString());
+		config.setFloat(ConfigKeys.SDR_CORRECTION, correctionSlider.getValue() / 100.0f);
 
 		if (app.isRunning()) {
 			if (showConfirmResource("cfgRunningTitle", "cfgRunningText")) {
@@ -894,7 +895,7 @@ public class RasPagerWindow extends JFrame {
 		}
 
 		soundDeviceList.setSelectedItem(config.getString(ConfigKeys.SDR_DEVICE, null));
-
+		// Correction is loaded by transmitter
 		updateCorrection();
 	}
 

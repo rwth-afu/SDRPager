@@ -12,7 +12,8 @@ final class ConfigKeys {
 	public static final String SERIAL_USE = "serial.use";
 	public static final String SERIAL_PORT = "serial.port";
 	public static final String SERIAL_PIN = "serial.pin";
-	public static final String SDR_DEVICE = "sdr.soundDevice";
+	public static final String SDR_DEVICE = "sdr.device";
+	public static final String SDR_CORRECTION = "sdr.correction";
 
 	private ConfigKeys() {
 	}
