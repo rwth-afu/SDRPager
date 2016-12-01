@@ -81,7 +81,7 @@ public class RasPagerWindow extends JFrame {
 	private JButton btnGpioPins;
 	private JRadioButton radioUseSerial;
 	private JRadioButton radioUseGpio;
-	private JComboBox<Mixer.Info> soundDeviceList;
+	private JComboBox<String> soundDeviceList;
 
 	private JButton searchStart;
 	private JButton searchStop;
@@ -479,8 +479,9 @@ public class RasPagerWindow extends JFrame {
 		soundDeviceList.setBounds(265, 316, 349, 18);
 		Mixer.Info[] soundDevices = AudioSystem.getMixerInfo();
 		for (Mixer.Info device : soundDevices) {
-			soundDeviceList.addItem(device);
+			soundDeviceList.addItem(device.getName());
 		}
+
 		configurationPanel.add(soundDeviceList);
 
 		// config button bounds
