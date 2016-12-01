@@ -40,6 +40,7 @@ public final class SDRTransmitter implements Transmitter {
 
 	@Override
 	public void init(Configuration config) throws Exception {
+		log.fine("INIT");
 		close();
 
 		txDelay = config.getInt("txDelay", 0);
@@ -72,7 +73,7 @@ public final class SDRTransmitter implements Transmitter {
 
 	@Override
 	public void send(byte[] data) throws Exception {
-		if (serial == null || gpio == null) {
+		if (serial == null && gpio == null) {
 			throw new IllegalStateException("Not initialized");
 		}
 

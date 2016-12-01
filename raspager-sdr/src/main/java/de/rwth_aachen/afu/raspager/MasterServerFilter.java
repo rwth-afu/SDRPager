@@ -24,16 +24,16 @@ final class MasterServerFilter implements IpFilterRule {
 	public boolean matches(InetSocketAddress remoteAddress) {
 		if (masters.contains(remoteAddress.getHostString())) {
 			log.log(Level.FINE, "Valid master server: {0}", remoteAddress.getHostString());
-			return true;
+			return false;
 		} else {
 			log.log(Level.WARNING, "Not a master server: {0}", remoteAddress.getHostString());
-			return false;
+			return true;
 		}
 	}
 
 	@Override
 	public IpFilterRuleType ruleType() {
-		return IpFilterRuleType.ACCEPT;
+		return IpFilterRuleType.REJECT;
 	}
 
 }

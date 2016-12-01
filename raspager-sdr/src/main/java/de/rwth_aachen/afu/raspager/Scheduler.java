@@ -44,7 +44,7 @@ class Scheduler extends TimerTask {
 		time = ((int) (System.currentTimeMillis() / 100) + delay) % MAX;
 
 		if (slots.hasChanged(time) && updateTimeSlotsHandler != null) {
-			log.fine("Updating time slots.");
+			// log.fine("Updating time slots.");
 			updateTimeSlotsHandler.accept(slots);
 		}
 
@@ -72,7 +72,8 @@ class Scheduler extends TimerTask {
 
 				if (updateData(allowedCount)) {
 					rawData = transmitter.encode(codeWords);
-					this.state = State.DATA_ENCODED;
+					state = State.DATA_ENCODED;
+					log.log(Level.FINE, "state = {0}", state);
 				}
 			}
 		} catch (Throwable t) {
@@ -85,11 +86,14 @@ class Scheduler extends TimerTask {
 			log.fine("Activating transmitter.");
 			try {
 				transmitter.send(rawData);
+				log.fine("Data sent");
 			} catch (Throwable t) {
 				log.log(Level.SEVERE, "Failed to send data.", t);
 			} finally {
 				state = State.SLOT_STILL_ALLOWED;
 			}
+
+			log.log(Level.FINE, "state = {0}", state);
 		}
 	}
 
@@ -110,6 +114,8 @@ class Scheduler extends TimerTask {
 			log.log(Level.SEVERE, "Failed to encode data.", t);
 			state = State.AWAITING_SLOT;
 		}
+
+		log.log(Level.FINE, "state = {0}", state);
 	}
 
 	/**
@@ -179,9 +185,12 @@ class Scheduler extends TimerTask {
 			}
 		}
 
-		log.fine(String.format("Batches used: {0}/{1}", ((codeWords.size() - 18) / 17), maxBatch));
-
-		return msgCount > 0;
+		if (msgCount > 0) {
+			log.fine(String.format("Batches used: {0}/{1}", ((codeWords.size() - 18) / 17), maxBatch));
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public TimeSlots getSlots() {

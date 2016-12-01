@@ -19,7 +19,7 @@ final class RasPagerService {
 	private ThreadWrapper<Server> server;
 	private boolean running = false;
 
-	private final Timer timer = new Timer();
+	private Timer timer = new Timer();
 	private final Deque<Message> messages = new ConcurrentLinkedDeque<>();
 	private final SDRTransmitter transmitter = new SDRTransmitter();
 	private final Configuration config;
@@ -85,6 +85,7 @@ final class RasPagerService {
 			server.getJob().setTimeSlotsHandler(scheduler::setTimeSlots);
 		}
 
+		timer = new Timer();
 		timer.schedule(scheduler, 100, period);
 	}
 
@@ -113,27 +114,21 @@ final class RasPagerService {
 		// start scheduler (not searching)
 		startScheduler(false);
 
-		// start server
 		server.start();
 
-		// set running to true
 		running = true;
 		log.info("Server is running.");
 
-		// if join is true
 		if (join) {
 			try {
-				// join server thread
 				server.join();
 			} catch (InterruptedException e) {
 				log.log(Level.SEVERE, "Server thread interrupted.", e);
 			}
 
-			// stop server
 			stopServer(true);
 		}
 
-		// set connection status to false
 		if (window != null) {
 			window.setStatus(false);
 		}

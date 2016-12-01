@@ -60,7 +60,7 @@ class SearchScheduler extends Scheduler {
 			}
 
 			// TODO Refactor
-			service.getWindow().updateCorrection();
+			service.getWindow().updateCorrection(correction);
 		} else {
 			service.stopSearching();
 		}
@@ -74,7 +74,8 @@ class SearchScheduler extends Scheduler {
 		addMessage(new Message(("#00 5:1:9C8:0:000000   010112").split(":")));
 
 		if (!addr.isEmpty()) {
-			String[] parts = new String[]{"#00 6", "1", addr, "3", String.format("correction=%+4.2f", sdr.getCorrection())};
+			String[] parts = new String[] { "#00 6", "1", addr, "3",
+					String.format("correction=%+4.2f", sdr.getCorrection()) };
 			addMessage(new Message(parts));
 		}
 
@@ -97,7 +98,8 @@ class SearchScheduler extends Scheduler {
 
 		// add codewords of message
 		for (int c = 1; c < cwBuf.size(); c++) {
-			if ((data.size() - 18) % 17 == 0) data.add(Pocsag.SYNC);
+			if ((data.size() - 18) % 17 == 0)
+				data.add(Pocsag.SYNC);
 			data.add(cwBuf.get(c));
 		}
 

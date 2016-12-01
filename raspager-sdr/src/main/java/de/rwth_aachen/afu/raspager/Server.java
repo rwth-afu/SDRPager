@@ -79,7 +79,7 @@ final class Server implements Runnable {
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 		try {
-			ServerInitializer handler = new ServerInitializer(callbacks);
+			ServerInitializer handler = new ServerInitializer(config, callbacks);
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup);
 			b.channel(NioServerSocketChannel.class);

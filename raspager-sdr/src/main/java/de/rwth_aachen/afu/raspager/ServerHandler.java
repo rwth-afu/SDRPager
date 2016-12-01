@@ -24,6 +24,9 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		log.fine("Accepted new connection.");
+
+		ctx.write("[SDRPager v1.2-SCP-#2345678]\r\n");
+		ctx.flush();
 	}
 
 	@Override
@@ -79,11 +82,13 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	 *            Request which contains the message.
 	 */
 	private void handleMessage(ChannelHandlerContext ctx, String request) {
+		log.fine("Message");
 		try {
 			callbacks.addMessage(new Message(request));
 
 			// Send message ID as response
 			int messageId = Integer.parseInt(request.substring(1, 3), 16);
+			messageId = (messageId + 1) % 256;
 			String response = String.format("#%02x +\r\n", messageId);
 			ctx.write(response);
 		} catch (Throwable t) {
@@ -101,6 +106,7 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	 *            Request
 	 */
 	private void handleMasterIdentify(ChannelHandlerContext ctx, String request) {
+		log.fine("Identitfy");
 		try {
 			int time = callbacks.getTime();
 			String[] parts = request.split(":", 2);
@@ -122,6 +128,7 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	 *            Time data
 	 */
 	private void handleTimeCorrection(ChannelHandlerContext ctx, String request) {
+		log.fine("TimeCorrection");
 		try {
 			String[] parts = request.split(":", 2);
 			int delay = 0;
@@ -150,6 +157,7 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	 *            Time slot data.
 	 */
 	private void handleTimeSlots(ChannelHandlerContext ctx, String request) {
+		log.fine("TimeSlots");
 		try {
 			String[] parts = request.split(":", 2);
 			callbacks.setTimeSlots(parts[1]);

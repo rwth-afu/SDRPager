@@ -950,8 +950,13 @@ public class RasPagerWindow extends JFrame {
 		return searchAddress.getText();
 	}
 
-	public void updateCorrection() {
-		float correction = app.getTransmitter().getCorrection();
+	private void updateCorrection() {
+		float correction = app.getConfig().getFloat(ConfigKeys.SDR_CORRECTION, 0.0f);
+		correctionActual.setText(String.format("%+4.2f", correction));
+		correctionSlider.setValue((int) (correction * 100));
+	}
+
+	public void updateCorrection(float correction) {
 		correctionActual.setText(String.format("%+4.2f", correction));
 		correctionSlider.setValue((int) (correction * 100));
 	}
