@@ -18,7 +18,6 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.ipfilter.RuleBasedIpFilter;
 
 /**
  * RasPager server implementation.
@@ -30,7 +29,7 @@ final class Server implements Runnable {
 	private static final StringEncoder encoder = new StringEncoder();
 	private static final StringDecoder decoder = new StringDecoder();
 	private final ServerHandler protocol = new ServerHandler();
-	private final RuleBasedIpFilter ipFilter;
+	private final MasterServerFilter ipFilter;
 	private final int port;
 	private ChannelFuture serverFuture;
 
@@ -46,7 +45,7 @@ final class Server implements Runnable {
 		this.port = port;
 
 		if (masters != null) {
-			ipFilter = new RuleBasedIpFilter(new MasterServerFilter(masters));
+			ipFilter = new MasterServerFilter(masters);
 		} else {
 			ipFilter = null;
 		}

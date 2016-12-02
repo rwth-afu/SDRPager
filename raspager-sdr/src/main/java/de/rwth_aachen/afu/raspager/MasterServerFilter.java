@@ -4,15 +4,16 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import io.netty.handler.ipfilter.IpFilterRule;
-import io.netty.handler.ipfilter.IpFilterRuleType;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ipfilter.AbstractRemoteAddressFilter;
 
 /**
  * This class implements an IP-based filter for master servers.
  * 
  * @author Philipp Thiel
  */
-final class MasterServerFilter implements IpFilterRule {
+final class MasterServerFilter extends AbstractRemoteAddressFilter<InetSocketAddress> {
 	private static final Logger log = Logger.getLogger(MasterServerFilter.class.getName());
 	private final String[] masters;
 
@@ -22,26 +23,29 @@ final class MasterServerFilter implements IpFilterRule {
 	 * @param masters
 	 *            IP addresses of valid master servers.
 	 */
-	public MasterServerFilter(String[] masters) {
-		this.masters = masters;
+	public MasterServerFilter(String... masters) {
+		if (masters != null) {
+			this.masters = masters;
+		} else {
+			throw new NullPointerException("masters");
+		}
 	}
 
 	@Override
-	public boolean matches(InetSocketAddress remoteAddress) {
+	protected boolean accept(ChannelHandlerContext ctx, InetSocketAddress remoteAddress) throws Exception {
 		String addr = remoteAddress.getAddress().getHostAddress();
 		for (String m : masters) {
 			if (m.equalsIgnoreCase(addr)) {
-				log.log(Level.FINE, "Valid master server: {0}", remoteAddress.getHostString());
-				return false;
+				return true;
 			}
 		}
 
-		log.log(Level.WARNING, "Not a master server: {0}", remoteAddress.getHostString());
-		return true;
+		return false;
 	}
 
 	@Override
-	public IpFilterRuleType ruleType() {
-		return IpFilterRuleType.REJECT;
+	protected ChannelFuture channelRejected(ChannelHandlerContext ctx, InetSocketAddress remoteAddress) {
+		log.log(Level.WARNING, "Connection rejected: {0}", remoteAddress.getHostString());
+		return null;
 	}
 }

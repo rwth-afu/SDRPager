@@ -66,6 +66,7 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		log.fine("Accepted new connection.");
 
+		// TODO Adjust version string
 		ctx.write("[SDRPager v1.2-SCP-#2345678]\r\n");
 		ctx.flush();
 	}
