@@ -20,7 +20,9 @@
 			<outputDirectory></outputDirectory>
 			<includes>
 				<include>*.jar</include>
-				<include>*.properties</include>
+				<include>raspager.properties</include>
+				<include>logging.properties</include>
+				<include>raspager.sh</include>
 			</includes>
 		</fileSet>
 	</fileSets>

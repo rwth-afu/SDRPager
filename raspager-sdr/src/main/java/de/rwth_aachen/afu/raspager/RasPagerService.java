@@ -104,7 +104,14 @@ final class RasPagerService {
 
 	public void startServer(boolean join) {
 		if (server == null) {
-			Server srv = new Server(config);
+			int port = config.getInt(ConfigKeys.NET_PORT, 1337);
+			String[] masters = null;
+			if (config.contains(ConfigKeys.NET_MASTERS)) {
+				String v = config.getString(ConfigKeys.NET_MASTERS);
+				masters = v.split(" +");
+			}
+
+			Server srv = new Server(port, masters);
 			// Register event handlers
 			srv.setAddMessageHandler(messages::push);
 			// Create new server thread

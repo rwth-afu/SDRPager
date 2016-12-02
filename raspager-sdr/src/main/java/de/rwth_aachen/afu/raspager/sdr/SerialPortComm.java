@@ -10,6 +10,11 @@ import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 
+/**
+ * Serial port controller used by the SDR transmitter.
+ * 
+ * @author Philipp Thiel
+ */
 public final class SerialPortComm {
 	public static final int DTR = 0;
 	public static final int RTS = 1;

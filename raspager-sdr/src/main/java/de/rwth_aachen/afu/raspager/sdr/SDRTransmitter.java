@@ -7,8 +7,12 @@ import java.util.logging.Logger;
 import de.rwth_aachen.afu.raspager.Configuration;
 import de.rwth_aachen.afu.raspager.Transmitter;
 
+/**
+ * RasPager SDR transmitter implementation.
+ * 
+ * @author Philipp Thiel
+ */
 public final class SDRTransmitter implements Transmitter {
-
 	private static final Logger log = Logger.getLogger(SDRTransmitter.class.getName());
 	private AudioEncoder encoder;
 	private SerialPortComm serial;
@@ -55,10 +59,7 @@ public final class SDRTransmitter implements Transmitter {
 			gpio = new GpioPortComm(config.getString("gpio.pin"), invert);
 		}
 
-		// TODO DEBUG -- REMOVE
-		String device = config.getString("sdr.device");
-		log.log(Level.FINE, "Audio device: {0}", device);
-		encoder = new AudioEncoder(device);
+		encoder = new AudioEncoder(config.getString("sdr.device"));
 		encoder.setCorrection(config.getFloat("sdr.correction", 0.0f));
 	}
 

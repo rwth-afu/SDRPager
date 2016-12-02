@@ -7,6 +7,11 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
 
+/**
+ * GPIO controller implementation used by the RasPager SDR transmitter.
+ * 
+ * @author Philipp Thiel
+ */
 final class GpioPortComm {
 	private GpioController gpio;
 	private GpioPinDigitalOutput gpioPin = null;

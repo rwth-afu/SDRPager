@@ -8,27 +8,48 @@ import java.util.logging.Logger;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.ipfilter.RuleBasedIpFilter;
 
 /**
  * RasPager server implementation.
+ * 
+ * @author Philipp Thiel
  */
 final class Server implements Runnable {
 	private static final Logger log = Logger.getLogger(Server.class.getName());
-	private final Configuration config;
-	private final ServerCallbacks callbacks = new ServerCallbacks();
+	private static final StringEncoder encoder = new StringEncoder();
+	private static final StringDecoder decoder = new StringDecoder();
+	private final ServerHandler protocol = new ServerHandler();
+	private final RuleBasedIpFilter ipFilter;
+	private final int port;
 	private ChannelFuture serverFuture;
 
 	/**
-	 * Constructs a new server instance.
+	 * Creates a new server instance.
 	 * 
-	 * @param config
-	 *            Configuration
+	 * @param port
+	 *            Port number to listen on.
+	 * @param masters
+	 *            Master server list (null to accept all incoming connections).
 	 */
-	public Server(Configuration config) {
-		this.config = config;
+	public Server(int port, String[] masters) {
+		this.port = port;
+
+		if (masters != null) {
+			ipFilter = new RuleBasedIpFilter(new MasterServerFilter(masters));
+		} else {
+			ipFilter = null;
+		}
 	}
 
 	/**
@@ -38,7 +59,7 @@ final class Server implements Runnable {
 	 *            Handler to use.
 	 */
 	public void setAddMessageHandler(Consumer<Message> messageHandler) {
-		callbacks.setAddMessageHandler(messageHandler);
+		protocol.setAddMessageHandler(messageHandler);
 	}
 
 	/**
@@ -48,7 +69,7 @@ final class Server implements Runnable {
 	 *            Handler to use.
 	 */
 	public void setTimeCorrectionHandler(IntConsumer timeCorrectionHandler) {
-		callbacks.setTimeCorrectionHandler(timeCorrectionHandler);
+		protocol.setTimeCorrectionHandler(timeCorrectionHandler);
 	}
 
 	/**
@@ -58,7 +79,7 @@ final class Server implements Runnable {
 	 *            Handler to use.
 	 */
 	public void setTimeSlotsHandler(Consumer<String> timeSlotsHandler) {
-		callbacks.setTimeSlotsHandler(timeSlotsHandler);
+		protocol.setTimeSlotsHandler(timeSlotsHandler);
 	}
 
 	/**
@@ -68,27 +89,45 @@ final class Server implements Runnable {
 	 *            Handler to use.
 	 */
 	public void setGetTimeHandler(IntSupplier timeHandler) {
-		callbacks.setTimeHandler(timeHandler);
+		protocol.setTimeHandler(timeHandler);
 	}
 
 	@Override
 	public void run() {
-		int port = config.getInt(ConfigKeys.NET_PORT, 1337);
-
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 		try {
-			ServerInitializer handler = new ServerInitializer(config, callbacks);
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup);
 			b.channel(NioServerSocketChannel.class);
-			b.childHandler(handler);
+
+			// Define channel initializer
+			b.childHandler(new ChannelInitializer<SocketChannel>() {
+				@Override
+				protected void initChannel(SocketChannel ch) throws Exception {
+					ChannelPipeline pip = ch.pipeline();
+
+					if (ipFilter != null) {
+						pip.addLast("filter", ipFilter);
+					}
+
+					pip.addLast(new DelimiterBasedFrameDecoder(4096, Delimiters.lineDelimiter()));
+					// Static as both encoder and decoder are sharable.
+					pip.addLast("decoder", decoder);
+					pip.addLast("encoder", encoder);
+					// Our custom message handler
+					pip.addLast("protocol", protocol);
+				}
+			});
+
 			serverFuture = b.bind(port).sync();
 			// Wait for shutdown
 			serverFuture.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
 			log.log(Level.SEVERE, "Funkruf server interrupted.", e);
+		} catch (Throwable t) {
+			log.log(Level.SEVERE, "Exception in server.", t);
 		} finally {
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
@@ -96,8 +135,8 @@ final class Server implements Runnable {
 	}
 
 	/**
-	 * Stops the server if running. This method will block until the server is
-	 * stopped.
+	 * Stops the server if it is running. This method will block until the
+	 * server is stopped.
 	 */
 	public void shutdown() {
 		try {
