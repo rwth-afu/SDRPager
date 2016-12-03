@@ -761,8 +761,7 @@ public class RasPagerWindow extends JFrame {
 			return;
 		}
 
-		// TODO What?
-		if (run && app.isServerRunning()) {
+		if (run) {
 			if (app.isServerRunning()) {
 				if (!showConfirmResource("searchRunningTitle", "searchRunningText")) {
 					return;

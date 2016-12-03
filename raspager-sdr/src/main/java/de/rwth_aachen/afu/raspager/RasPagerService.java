@@ -60,8 +60,15 @@ final class RasPagerService {
 		try {
 			transmitter.init(config);
 		} catch (Exception ex) {
+			log.log(Level.SEVERE, "Failed to init transmitter.", ex);
+
+			String msg = ex.getMessage();
+			if (msg == null || msg.isEmpty()) {
+				msg = ex.getClass().getName();
+			}
+
 			if (window != null) {
-				window.showError("Failed to init transmitter", ex.getMessage());
+				window.showError("Failed to init transmitter", msg);
 			}
 
 			return;

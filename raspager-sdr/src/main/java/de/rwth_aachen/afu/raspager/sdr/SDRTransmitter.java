@@ -44,7 +44,6 @@ public final class SDRTransmitter implements Transmitter {
 
 	@Override
 	public void init(Configuration config) throws Exception {
-		log.fine("INIT");
 		close();
 
 		txDelay = config.getInt("txDelay", 0);
