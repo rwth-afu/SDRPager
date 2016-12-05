@@ -21,14 +21,10 @@ class SearchScheduler extends Scheduler {
 	public void run() {
 		try {
 			if (updateData()) {
+				log.fine("Encoding data.");
 				rawData = transmitter.encode(codeWords);
-
-				log.fine("Activating transmitter.");
-				try {
-					transmitter.send(rawData);
-				} catch (Throwable t) {
-					log.log(Level.SEVERE, "Failed to send data.", t);
-				}
+				log.fine("Sending data.");
+				transmitter.send(rawData);
 			}
 		} catch (IllegalStateException ex) {
 			// This happens when the task is cancelled while executing.
@@ -36,7 +32,7 @@ class SearchScheduler extends Scheduler {
 				log.log(Level.SEVERE, "SearchScheduler interrupted.", ex);
 			}
 		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to encode data.", t);
+			log.log(Level.SEVERE, "SearchScheduler failed.", t);
 		}
 	}
 
