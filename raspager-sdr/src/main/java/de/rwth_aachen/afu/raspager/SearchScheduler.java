@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
 	private final RasPagerService service;
-	private List<Integer> data;
 
 	public SearchScheduler(Deque<Message> messageQueue, RasPagerService service) {
 		super(messageQueue, service.getTransmitter());
@@ -65,9 +64,9 @@ class SearchScheduler extends Scheduler {
 			service.stopSearching();
 		}
 
-		data = new ArrayList<>();
+		codeWords = new ArrayList<>();
 		for (int i = 0; i < 18; ++i) {
-			data.add(Pocsag.PRAEAMBLE);
+			codeWords.add(Pocsag.PRAEAMBLE);
 		}
 
 		String addr = service.getWindow().getSkyperAddress();
@@ -84,7 +83,7 @@ class SearchScheduler extends Scheduler {
 
 	private void addMessage(Message message) {
 		// add sync-word (start of batch)
-		data.add(Pocsag.SYNC);
+		codeWords.add(Pocsag.SYNC);
 
 		// get codewords of message
 		List<Integer> cwBuf = message.getCodeWords();
@@ -92,20 +91,20 @@ class SearchScheduler extends Scheduler {
 
 		// add idle-words until frame position is reached
 		for (int c = 0; c < framePos; c++) {
-			data.add(Pocsag.IDLE);
-			data.add(Pocsag.IDLE);
+			codeWords.add(Pocsag.IDLE);
+			codeWords.add(Pocsag.IDLE);
 		}
 
 		// add codewords of message
 		for (int c = 1; c < cwBuf.size(); c++) {
-			if ((data.size() - 18) % 17 == 0)
-				data.add(Pocsag.SYNC);
-			data.add(cwBuf.get(c));
+			if ((codeWords.size() - 18) % 17 == 0)
+				codeWords.add(Pocsag.SYNC);
+			codeWords.add(cwBuf.get(c));
 		}
 
 		// fill last batch with idle-words
-		while ((data.size() - 18) % 17 != 0) {
-			data.add(Pocsag.IDLE);
+		while ((codeWords.size() - 18) % 17 != 0) {
+			codeWords.add(Pocsag.IDLE);
 		}
 	}
 }

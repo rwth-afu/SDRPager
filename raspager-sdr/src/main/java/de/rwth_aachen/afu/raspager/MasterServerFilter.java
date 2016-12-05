@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ipfilter.AbstractRemoteAddressFilter;
 
@@ -13,6 +14,7 @@ import io.netty.handler.ipfilter.AbstractRemoteAddressFilter;
  * 
  * @author Philipp Thiel
  */
+@Sharable
 final class MasterServerFilter extends AbstractRemoteAddressFilter<InetSocketAddress> {
 	private static final Logger log = Logger.getLogger(MasterServerFilter.class.getName());
 	private final String[] masters;
