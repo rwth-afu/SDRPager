@@ -206,7 +206,11 @@ public class RasPagerWindow extends JFrame {
 		searchStart = new JButton(texts.getString("searchStart"));
 		searchStart.setBounds(200, 434, 70, 18);
 		searchStart.addActionListener((e) -> {
-			runSearch(true);
+			if (!searchAddress.getText().isEmpty()) {
+				runSearch(true);
+			} else {
+				showErrorResource("searchAddrEmptyTitle", "searchAddrEmptyText");
+			}
 		});
 		main.add(searchStart);
 
@@ -778,6 +782,7 @@ public class RasPagerWindow extends JFrame {
 			searchStepWidth.setEditable(false);
 			searchAddress.setEditable(false);
 
+			startButton.setEnabled(false);
 		} else {
 			app.stopScheduler();
 
@@ -786,6 +791,8 @@ public class RasPagerWindow extends JFrame {
 
 			searchStepWidth.setEditable(true);
 			searchAddress.setEditable(true);
+
+			startButton.setEnabled(true);
 		}
 	}
 

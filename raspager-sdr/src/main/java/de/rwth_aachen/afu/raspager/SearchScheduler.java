@@ -50,14 +50,10 @@ class SearchScheduler extends Scheduler {
 		float stepSize = service.getStepSize();
 
 		if (correction < 1.0f) {
-			log.log(Level.FINE, "Current correction: {0}", correction);
-
 			correction += stepSize;
 			if (correction > 1.0f) {
 				correction = 1.0f;
 			}
-
-			log.log(Level.FINE, "Updated correction: {0}", correction);
 
 			sdr.setCorrection(correction);
 			// TODO Refactor
@@ -73,14 +69,19 @@ class SearchScheduler extends Scheduler {
 
 		addMessage(new Message(("#00 5:1:9C8:0:000000   010112").split(":")));
 
+		// TODO Remove? Empty field is checked in button handler.
 		String addr = service.getWindow().getSkyperAddress();
 		if (!addr.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", addr, "3",
 					String.format("correction=%+4.2f", sdr.getCorrection()) };
 			addMessage(new Message(parts));
-		}
 
-		return true;
+			return true;
+		} else {
+			codeWords = null;
+
+			return false;
+		}
 	}
 
 	private void addMessage(Message message) {
