@@ -1,12 +1,12 @@
 package de.rwth_aachen.afu.raspager;
 
-import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
-
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 
 class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
@@ -58,7 +58,7 @@ class SearchScheduler extends Scheduler {
 				sdr.setCorrection(correction + stepSize);
 			}
 
-			log.log(Level.FINE, "Updated correction: {0}", correction);
+			log.log(Level.FINE, "Updated correction: {0}", sdr.getCorrection());
 
 			// TODO Refactor
 			service.getWindow().updateCorrection(correction);
@@ -71,9 +71,9 @@ class SearchScheduler extends Scheduler {
 			codeWords.add(Pocsag.PRAEAMBLE);
 		}
 
-		String addr = service.getWindow().getSkyperAddress();
 		addMessage(new Message(("#00 5:1:9C8:0:000000   010112").split(":")));
 
+		String addr = service.getWindow().getSkyperAddress();
 		if (!addr.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", addr, "3",
 					String.format("correction=%+4.2f", sdr.getCorrection()) };
