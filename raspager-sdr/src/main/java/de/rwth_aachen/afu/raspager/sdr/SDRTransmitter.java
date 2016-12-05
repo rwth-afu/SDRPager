@@ -14,6 +14,7 @@ import de.rwth_aachen.afu.raspager.Transmitter;
  */
 public final class SDRTransmitter implements Transmitter {
 	private static final Logger log = Logger.getLogger(SDRTransmitter.class.getName());
+	private final Object lockObj = new Object();
 	private AudioEncoder encoder;
 	private SerialPortComm serial;
 	private GpioPortComm gpio;
@@ -21,76 +22,84 @@ public final class SDRTransmitter implements Transmitter {
 
 	@Override
 	public void close() throws Exception {
-		try {
-			if (serial != null) {
-				serial.close();
-				serial = null;
+		synchronized (lockObj) {
+			try {
+				if (serial != null) {
+					serial.close();
+					serial = null;
+				}
+			} catch (Throwable t) {
+				log.log(Level.SEVERE, "Failed to close serial port.", t);
 			}
-		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to close serial port.", t);
-		}
 
-		try {
-			if (gpio != null) {
-				gpio.close();
-				gpio = null;
+			try {
+				if (gpio != null) {
+					gpio.close();
+					gpio = null;
+				}
+			} catch (Throwable t) {
+				log.log(Level.SEVERE, "Failed to close GPIO port.", t);
 			}
-		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to close GPIO port.", t);
-		}
 
-		encoder = null;
+			encoder = null;
+		}
 	}
 
 	@Override
 	public void init(Configuration config) throws Exception {
-		close();
+		synchronized (lockObj) {
+			close();
 
-		txDelay = config.getInt("txDelay", 0);
-		boolean invert = config.getBoolean("invert", false);
+			txDelay = config.getInt("txDelay", 0);
+			boolean invert = config.getBoolean("invert", false);
 
-		if (config.getBoolean("serial.use", false)) {
-			int pin = SerialPortComm.getPinNumber(config.getString("serial.pin"));
-			serial = new SerialPortComm(config.getString("serial.port"), pin, invert);
+			if (config.getBoolean("serial.use", false)) {
+				int pin = SerialPortComm.getPinNumber(config.getString("serial.pin"));
+				serial = new SerialPortComm(config.getString("serial.port"), pin, invert);
+			}
+
+			if (config.getBoolean("gpio.use", true)) {
+				gpio = new GpioPortComm(config.getString("gpio.pin"), invert);
+			}
+
+			encoder = new AudioEncoder(config.getString("sdr.device"));
+			encoder.setCorrection(config.getFloat("sdr.correction", 0.0f));
 		}
-
-		if (config.getBoolean("gpio.use", true)) {
-			gpio = new GpioPortComm(config.getString("gpio.pin"), invert);
-		}
-
-		encoder = new AudioEncoder(config.getString("sdr.device"));
-		encoder.setCorrection(config.getFloat("sdr.correction", 0.0f));
 	}
 
 	@Override
 	public byte[] encode(List<Integer> data) throws Exception {
-		if (encoder != null) {
-			return encoder.encode(data);
-		} else {
-			throw new IllegalStateException("Encoder not initialized.");
+		synchronized (lockObj) {
+			if (encoder != null) {
+				return encoder.encode(data);
+			} else {
+				throw new IllegalStateException("Encoder not initialized.");
+			}
 		}
 	}
 
 	@Override
 	public void send(byte[] data) throws Exception {
-		if (serial == null && gpio == null) {
-			throw new IllegalStateException("Not initialized");
-		}
-
-		try {
-			enable();
-
-			if (txDelay > 0) {
-				try {
-					Thread.sleep(txDelay);
-				} catch (Throwable t) {
-					log.log(Level.SEVERE, "Failed to wait for TX delay.", t);
-				}
+		synchronized (lockObj) {
+			if (serial == null && gpio == null) {
+				throw new IllegalStateException("Not initialized");
 			}
 
-			encoder.play(data);
-		} finally {
-			disable();
+			try {
+				enable();
+
+				if (txDelay > 0) {
+					try {
+						Thread.sleep(txDelay);
+					} catch (Throwable t) {
+						log.log(Level.SEVERE, "Failed to wait for TX delay.", t);
+					}
+				}
+
+				encoder.play(data);
+			} finally {
+				disable();
+			}
 		}
 	}
 
@@ -137,16 +146,20 @@ public final class SDRTransmitter implements Transmitter {
 	}
 
 	public void setCorrection(float correction) {
-		if (encoder != null) {
-			encoder.setCorrection(correction);
+		synchronized (lockObj) {
+			if (encoder != null) {
+				encoder.setCorrection(correction);
+			}
 		}
 	}
 
 	public float getCorrection() {
-		if (encoder != null) {
-			return encoder.getCorrection();
-		} else {
-			return 0.0f;
+		synchronized (lockObj) {
+			if (encoder != null) {
+				return encoder.getCorrection();
+			} else {
+				return 0.0f;
+			}
 		}
 	}
 }

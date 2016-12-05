@@ -90,6 +90,16 @@ final class RasPagerService {
 			server.getJob().setGetTimeHandler(scheduler::getTime);
 			server.getJob().setTimeCorrectionHandler(scheduler::correctTime);
 			server.getJob().setTimeSlotsHandler(scheduler::setTimeSlots);
+
+			if (window != null) {
+				server.getJob().setConnectionHandler(() -> {
+					window.setStatus(true);
+				});
+
+				server.getJob().setDisconnectHandler(() -> {
+					window.setStatus(false);
+				});
+			}
 		}
 
 		timer = new Timer();

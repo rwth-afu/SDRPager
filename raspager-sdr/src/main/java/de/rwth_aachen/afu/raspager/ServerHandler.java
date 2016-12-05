@@ -1,5 +1,6 @@
 package de.rwth_aachen.afu.raspager;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
@@ -17,10 +18,13 @@ import io.netty.channel.SimpleChannelInboundHandler;
 @Sharable
 final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	private static final Logger log = Logger.getLogger(ServerHandler.class.getName());
+	private final AtomicInteger connectionCount = new AtomicInteger(0);
 	private Consumer<Message> messageHandler;
 	private IntConsumer timeCorrectionHandler;
 	private Consumer<String> timeSlotsHandler;
 	private IntSupplier timeHandler;
+	private Runnable connectHandler;
+	private Runnable disconnectHandler;
 
 	/**
 	 * Sets the handler for new message packets.
@@ -62,6 +66,27 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 		this.timeHandler = timeHandler;
 	}
 
+	/**
+	 * Sets the connect handler which is called when a new connection is
+	 * accepted.
+	 * 
+	 * @param handler
+	 *            Handler to use.
+	 */
+	public void setConnectHandler(Runnable handler) {
+		connectHandler = handler;
+	}
+
+	/**
+	 * Sets the disconnect handler which is called when a connection is closed.
+	 * 
+	 * @param handler
+	 *            Handler to use.
+	 */
+	public void setDisconnectHandler(Runnable handler) {
+		disconnectHandler = handler;
+	}
+
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		log.fine("Accepted new connection.");
@@ -69,11 +94,21 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 		// TODO Adjust version string
 		ctx.write("[SDRPager v1.2-SCP-#2345678]\r\n");
 		ctx.flush();
+
+		int count = connectionCount.incrementAndGet();
+		if (count == 1 && connectHandler != null) {
+			connectHandler.run();
+		}
 	}
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		log.fine("Connection closed.");
+
+		int count = connectionCount.decrementAndGet();
+		if (count == 0 && disconnectHandler != null) {
+			disconnectHandler.run();
+		}
 	}
 
 	@Override

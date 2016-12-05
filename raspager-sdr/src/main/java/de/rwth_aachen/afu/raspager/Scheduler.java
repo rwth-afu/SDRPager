@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +20,7 @@ class Scheduler extends TimerTask {
 	protected static final int MAX_ENCODE_TIME_100MS = 3;
 	protected static final int TIMERCYCLE_MS = 10;
 
+	protected AtomicBoolean canceled = new AtomicBoolean(false);
 	protected final TimeSlots slots = new TimeSlots();
 	protected final Deque<Message> messageQueue;
 	protected final Transmitter transmitter;
@@ -26,7 +28,7 @@ class Scheduler extends TimerTask {
 	protected int time = 0;
 	protected int delay = 0;
 	protected Consumer<TimeSlots> updateTimeSlotsHandler;
-	protected State state = State.AWAITING_SLOT;
+	protected State schedulerState = State.AWAITING_SLOT;
 	protected List<Integer> codeWords;
 	protected byte[] rawData;
 
@@ -40,7 +42,18 @@ class Scheduler extends TimerTask {
 	}
 
 	@Override
+	public boolean cancel() {
+		canceled.set(true);
+
+		return super.cancel();
+	}
+
+	@Override
 	public void run() {
+		if (canceled.get()) {
+			return;
+		}
+
 		time = ((int) (System.currentTimeMillis() / 100) + delay) % MAX;
 
 		if (slots.hasChanged(time) && updateTimeSlotsHandler != null) {
@@ -48,7 +61,7 @@ class Scheduler extends TimerTask {
 			updateTimeSlotsHandler.accept(slots);
 		}
 
-		switch (state) {
+		switch (schedulerState) {
 		case AWAITING_SLOT:
 			encodeData();
 			break;
@@ -59,7 +72,7 @@ class Scheduler extends TimerTask {
 			stillAllowed();
 			break;
 		default:
-			log.log(Level.WARNING, "Unknown state {0}.", state);
+			log.log(Level.WARNING, "Unknown state {0}.", schedulerState);
 		}
 	}
 
@@ -72,8 +85,8 @@ class Scheduler extends TimerTask {
 
 				if (updateData(allowedCount)) {
 					rawData = transmitter.encode(codeWords);
-					state = State.DATA_ENCODED;
-					log.log(Level.FINE, "state = {0}", state);
+					schedulerState = State.DATA_ENCODED;
+					log.log(Level.FINE, "state = {0}", schedulerState);
 				}
 			}
 		} catch (Throwable t) {
@@ -90,10 +103,10 @@ class Scheduler extends TimerTask {
 			} catch (Throwable t) {
 				log.log(Level.SEVERE, "Failed to send data.", t);
 			} finally {
-				state = State.SLOT_STILL_ALLOWED;
+				schedulerState = State.SLOT_STILL_ALLOWED;
 			}
 
-			log.log(Level.FINE, "state = {0}", state);
+			log.log(Level.FINE, "state = {0}", schedulerState);
 		}
 	}
 
@@ -105,17 +118,17 @@ class Scheduler extends TimerTask {
 
 				if (updateData(count)) {
 					rawData = transmitter.encode(codeWords);
-					state = State.DATA_ENCODED;
+					schedulerState = State.DATA_ENCODED;
 				}
 			} else {
-				state = State.AWAITING_SLOT;
+				schedulerState = State.AWAITING_SLOT;
 			}
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to encode data.", t);
-			state = State.AWAITING_SLOT;
+			schedulerState = State.AWAITING_SLOT;
 		}
 
-		log.log(Level.FINE, "state = {0}", state);
+		log.log(Level.FINE, "state = {0}", schedulerState);
 	}
 
 	/**

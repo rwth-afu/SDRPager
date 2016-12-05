@@ -22,23 +22,24 @@ class SearchScheduler extends Scheduler {
 		try {
 			if (updateData()) {
 				rawData = transmitter.encode(codeWords);
-				sendData();
+
+				log.fine("Activating transmitter.");
+				try {
+					transmitter.send(rawData);
+				} catch (Throwable t) {
+					log.log(Level.SEVERE, "Failed to send data.", t);
+				}
+			}
+		} catch (IllegalStateException ex) {
+			// This happens when the task is cancelled while executing.
+			if (!canceled.get()) {
+				log.log(Level.SEVERE, "SearchScheduler interrupted.", ex);
 			}
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to encode data.", t);
 		}
 	}
 
-	private void sendData() {
-		log.fine("Activating transmitter.");
-		try {
-			transmitter.send(rawData);
-		} catch (Throwable t) {
-			log.log(Level.SEVERE, "Failed to send data.", t);
-		}
-	}
-
-	// get data depending on slot count
 	private boolean updateData() {
 		if (service.getWindow() == null) {
 			throw new IllegalStateException("Main window is null.");

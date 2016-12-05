@@ -91,6 +91,26 @@ final class Server implements Runnable {
 		protocol.setTimeHandler(timeHandler);
 	}
 
+	/**
+	 * Sets the handler for new connections.
+	 * 
+	 * @param handler
+	 *            Handler to use.
+	 */
+	public void setConnectionHandler(Runnable handler) {
+		protocol.setConnectHandler(handler);
+	}
+
+	/**
+	 * Sets the handler for closed connections.
+	 * 
+	 * @param handler
+	 *            Handler to use.
+	 */
+	public void setDisconnectHandler(Runnable handler) {
+		protocol.setDisconnectHandler(handler);
+	}
+
 	@Override
 	public void run() {
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
