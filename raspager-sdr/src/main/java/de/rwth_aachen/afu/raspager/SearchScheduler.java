@@ -71,7 +71,7 @@ class SearchScheduler extends Scheduler {
 
 		// TODO Remove? Empty field is checked in button handler.
 		String addr = service.getWindow().getSkyperAddress();
-		if (!addr.isEmpty()) {
+		if (addr != null && !addr.isEmpty()) {
 			String[] parts = new String[] { "#00 6", "1", addr, "3",
 					String.format("correction=%+4.2f", sdr.getCorrection()) };
 			addMessage(new Message(parts));

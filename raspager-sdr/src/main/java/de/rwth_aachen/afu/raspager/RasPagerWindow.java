@@ -206,11 +206,7 @@ public class RasPagerWindow extends JFrame {
 		searchStart = new JButton(texts.getString("searchStart"));
 		searchStart.setBounds(200, 434, 70, 18);
 		searchStart.addActionListener((e) -> {
-			if (!searchAddress.getText().isEmpty()) {
-				runSearch(true);
-			} else {
-				showErrorResource("searchAddrEmptyTitle", "searchAddrEmptyText");
-			}
+			runSearch(true);
 		});
 		main.add(searchStart);
 
@@ -953,7 +949,12 @@ public class RasPagerWindow extends JFrame {
 	}
 
 	public String getSkyperAddress() {
-		return searchAddress.getText();
+		if (searchAddress.getText().isEmpty()) {
+			int intAddr = Integer.parseInt(searchAddress.getText());
+			return Integer.toHexString(intAddr);
+		} else {
+			return null;
+		}
 	}
 
 	private void updateCorrection() {
