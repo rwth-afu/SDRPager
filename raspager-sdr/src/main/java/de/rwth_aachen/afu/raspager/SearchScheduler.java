@@ -50,13 +50,15 @@ class SearchScheduler extends Scheduler {
 		float stepSize = service.getStepSize();
 
 		if (correction < 1.0f) {
-			log.info(String.format("Correction {0}", correction));
+			log.log(Level.FINE, "Current correction: {0}", correction);
 
 			if (correction + stepSize > 1.0f) {
 				sdr.setCorrection(1.0f);
 			} else {
 				sdr.setCorrection(correction + stepSize);
 			}
+
+			log.log(Level.FINE, "Updated correction: {0}", correction);
 
 			// TODO Refactor
 			service.getWindow().updateCorrection(correction);
