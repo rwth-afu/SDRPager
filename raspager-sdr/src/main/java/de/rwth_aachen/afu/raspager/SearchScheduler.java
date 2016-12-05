@@ -52,16 +52,16 @@ class SearchScheduler extends Scheduler {
 		if (correction < 1.0f) {
 			log.log(Level.FINE, "Current correction: {0}", correction);
 
-			if (correction + stepSize > 1.0f) {
-				sdr.setCorrection(1.0f);
-			} else {
-				sdr.setCorrection(correction + stepSize);
+			correction += stepSize;
+			if (correction > 1.0f) {
+				correction = 1.0f;
 			}
 
-			log.log(Level.FINE, "Updated correction: {0}", sdr.getCorrection());
+			log.log(Level.FINE, "Updated correction: {0}", correction);
 
+			sdr.setCorrection(correction);
 			// TODO Refactor
-			service.getWindow().updateCorrection(sdr.getCorrection());
+			service.getWindow().updateCorrection(correction);
 		} else {
 			service.stopSearching();
 		}
