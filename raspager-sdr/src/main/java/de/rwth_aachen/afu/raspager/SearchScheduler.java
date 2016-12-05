@@ -47,7 +47,7 @@ class SearchScheduler extends Scheduler {
 		SDRTransmitter sdr = (SDRTransmitter) transmitter;
 
 		float correction = sdr.getCorrection();
-		float stepSize = service.getSearchStepSize();
+		float stepSize = service.getStepSize();
 
 		if (correction < 1.0f) {
 			log.info(String.format("Correction {0}", correction));
