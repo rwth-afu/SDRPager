@@ -949,7 +949,7 @@ public class RasPagerWindow extends JFrame {
 	}
 
 	public String getSkyperAddress() {
-		if (searchAddress.getText().isEmpty()) {
+		if (!searchAddress.getText().isEmpty()) {
 			int intAddr = Integer.parseInt(searchAddress.getText());
 			return Integer.toHexString(intAddr);
 		} else {
