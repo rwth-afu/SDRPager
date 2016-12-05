@@ -61,7 +61,7 @@ class SearchScheduler extends Scheduler {
 			log.log(Level.FINE, "Updated correction: {0}", sdr.getCorrection());
 
 			// TODO Refactor
-			service.getWindow().updateCorrection(correction);
+			service.getWindow().updateCorrection(sdr.getCorrection());
 		} else {
 			service.stopSearching();
 		}
