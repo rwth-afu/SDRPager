@@ -94,7 +94,7 @@ public class RasPagerWindow extends JFrame {
 	private final ResourceBundle texts;
 
 	// constructor
-	public RasPagerWindow(RasPagerService app) {
+	public RasPagerWindow(RasPagerService app, boolean withTrayIcon) {
 		this.app = app;
 
 		// Load locale stuff
@@ -725,24 +725,25 @@ public class RasPagerWindow extends JFrame {
 
 		loadConfig();
 
-		// create tray icon
-		Image trayImage = Toolkit.getDefaultToolkit().getImage("icon.ico");
+		// create tray icon if requested
+		if (withTrayIcon) {
+			Image trayImage = Toolkit.getDefaultToolkit().getImage("icon.ico");
 
-		PopupMenu trayMenu = new PopupMenu(texts.getString("trayMenu"));
-		MenuItem menuItem = new MenuItem(texts.getString("trayMenuShow"));
-		menuItem.addActionListener((e) -> {
-			setExtendedState(Frame.NORMAL);
-			setVisible(true);
-		});
-		trayMenu.add(menuItem);
+			PopupMenu trayMenu = new PopupMenu(texts.getString("trayMenu"));
+			MenuItem menuItem = new MenuItem(texts.getString("trayMenuShow"));
+			menuItem.addActionListener((e) -> {
+				setExtendedState(Frame.NORMAL);
+				setVisible(true);
+			});
+			trayMenu.add(menuItem);
 
-		trayIcon = new TrayIcon(trayImage, "RasPager", trayMenu);
-		try {
-			SystemTray.getSystemTray().add(trayIcon);
-		} catch (AWTException e) {
-			log.warning("Failed to add tray icon.");
+			trayIcon = new TrayIcon(trayImage, "RasPager", trayMenu);
+			try {
+				SystemTray.getSystemTray().add(trayIcon);
+			} catch (AWTException e) {
+				log.warning("Failed to add tray icon.");
+			}
 		}
-
 	}
 
 	// set connection status

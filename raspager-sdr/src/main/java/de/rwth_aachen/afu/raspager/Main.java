@@ -17,6 +17,7 @@ import org.apache.commons.cli.ParseException;
 public final class Main {
 	private static final Logger log = Logger.getLogger(Main.class.getName());
 	private static boolean startService = false;
+	private static boolean withTrayIcon = true;
 
 	private static void initRxTx() {
 		// Preventing rxtx to write to the console
@@ -49,6 +50,7 @@ public final class Main {
 		opts.addOption("h", "help", false, "Show this help.");
 		opts.addOption("v", "version", false, "Show version infomration.");
 		opts.addOption("s", "service", false, "Run as a service without a GUI.");
+		opts.addOption("no-trayicon", false, "Disable tray icon.");
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine line = null;
@@ -74,6 +76,10 @@ public final class Main {
 			startService = true;
 		}
 
+		if (line.hasOption("no-trayicon")) {
+			withTrayIcon = false;
+		}
+
 		try {
 			String configFile = line.getOptionValue('c', "raspager.properties");
 			config.load(configFile);
@@ -81,8 +87,6 @@ public final class Main {
 			log.log(Level.WARNING, "Failed to load configuration: {0}", ex.getMessage());
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Failed to load configuration.", t);
-			// TODO Abort on error?
-			// return false;
 		}
 
 		return true;
@@ -102,7 +106,7 @@ public final class Main {
 
 		RasPagerService app = null;
 		try {
-			app = new RasPagerService(config, startService);
+			app = new RasPagerService(config, startService, withTrayIcon);
 			app.run();
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "Main application error.", t);

@@ -26,11 +26,12 @@ final class RasPagerService {
 	private final RasPagerWindow window;
 	private Scheduler scheduler;
 
-	public RasPagerService(Configuration config, boolean startService) throws FileNotFoundException, IOException {
+	public RasPagerService(Configuration config, boolean startService, boolean withTrayIcon)
+			throws FileNotFoundException, IOException {
 		this.config = config;
 
 		if (!startService) {
-			window = new RasPagerWindow(this);
+			window = new RasPagerWindow(this, withTrayIcon);
 		} else {
 			window = null;
 		}
