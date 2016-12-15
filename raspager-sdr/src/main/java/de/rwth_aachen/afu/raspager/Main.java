@@ -50,7 +50,7 @@ public final class Main {
 		opts.addOption("h", "help", false, "Show this help.");
 		opts.addOption("v", "version", false, "Show version infomration.");
 		opts.addOption("s", "service", false, "Run as a service without a GUI.");
-		opts.addOption("no-trayicon", false, "Disable tray icon.");
+		opts.addOption("notrayicon", false, "Disable tray icon.");
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine line = null;
@@ -76,7 +76,7 @@ public final class Main {
 			startService = true;
 		}
 
-		if (line.hasOption("no-trayicon")) {
+		if (line.hasOption("notrayicon")) {
 			withTrayIcon = false;
 		}
 
