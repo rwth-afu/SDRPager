@@ -199,7 +199,7 @@ class Scheduler extends TimerTask {
 		}
 
 		if (msgCount > 0) {
-			log.fine(String.format("Batches used: {0}/{1}", ((codeWords.size() - 18) / 17), maxBatch));
+			log.fine(String.format("Batches used: %1$d / %2$d", ((codeWords.size() - 18) / 17), maxBatch));
 			return true;
 		} else {
 			return false;
