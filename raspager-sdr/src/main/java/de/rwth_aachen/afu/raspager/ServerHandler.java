@@ -92,7 +92,7 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 		log.fine("Accepted new connection.");
 
 		// TODO Adjust version string
-		ctx.write("[SDRPager v1.2-SCP-#2345678]\r\n");
+		ctx.write("[SDRPager v2.0-SCP-#2345678]\r\n");
 		ctx.flush();
 
 		int count = connectionCount.incrementAndGet();
@@ -148,7 +148,6 @@ final class ServerHandler extends SimpleChannelInboundHandler<String> {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		log.log(Level.SEVERE, "Exception caught in channel handler.", cause);
-		// TODO Keep connection open?
 		ctx.close();
 	}
 

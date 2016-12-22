@@ -13,7 +13,6 @@ import de.rwth_aachen.afu.raspager.sdr.SDRTransmitter;
 final class RasPagerService {
 	private static final Logger log = Logger.getLogger(RasPagerService.class.getName());
 
-	// TODO Get rid of all these static global vars
 	private static final float DEFAULT_SEARCH_STEP_SIZE = 0.05f;
 	private float searchStepSize = DEFAULT_SEARCH_STEP_SIZE;
 	private ThreadWrapper<Server> server;
@@ -77,10 +76,10 @@ final class RasPagerService {
 
 		int period = 100;
 		if (searching) {
-			scheduler = new SearchScheduler(messages, this);
+			scheduler = new SearchScheduler(this, messages);
 			period = 5000;
 		} else {
-			scheduler = new Scheduler(messages, transmitter);
+			scheduler = new Scheduler(config, messages, transmitter);
 		}
 
 		if (window != null) {

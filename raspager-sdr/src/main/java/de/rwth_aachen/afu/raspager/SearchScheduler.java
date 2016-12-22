@@ -12,8 +12,8 @@ class SearchScheduler extends Scheduler {
 	private static final Logger log = Logger.getLogger(SearchScheduler.class.getName());
 	private final RasPagerService service;
 
-	public SearchScheduler(Deque<Message> messageQueue, RasPagerService service) {
-		super(messageQueue, service.getTransmitter());
+	public SearchScheduler(RasPagerService service, Deque<Message> messageQueue) {
+		super(service.getConfig(), messageQueue, service.getTransmitter());
 		this.service = service;
 	}
 

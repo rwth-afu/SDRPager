@@ -24,6 +24,7 @@ class Scheduler extends TimerTask {
 	protected final TimeSlots slots = new TimeSlots();
 	protected final Deque<Message> messageQueue;
 	protected final Transmitter transmitter;
+	private final int txDelay;
 
 	protected int time = 0;
 	protected int delay = 0;
@@ -32,9 +33,11 @@ class Scheduler extends TimerTask {
 	protected List<Integer> codeWords;
 	protected byte[] rawData;
 
-	public Scheduler(Deque<Message> messageQueue, Transmitter transmitter) {
+	public Scheduler(Configuration config, Deque<Message> messageQueue, Transmitter transmitter) {
 		this.messageQueue = messageQueue;
 		this.transmitter = transmitter;
+
+		this.txDelay = config.getInt(ConfigKeys.TX_DELAY);
 	}
 
 	public void setUpdateTimeSlotsHandler(Consumer<TimeSlots> handler) {
@@ -143,7 +146,7 @@ class Scheduler extends TimerTask {
 		// max batches per slot: (slot time - praeambel time) / bps / ((frames +
 		// (1 = sync)) * bits per frame)
 		// (3,75 - 0,48) * 1200 / ((16 + 1) * 32)
-		int maxBatch = (int) ((6.40 * slotCount - 0.48 - delay / 1000) * 1200 / 544);
+		int maxBatch = (int) ((6.40 * slotCount - 0.48 - txDelay / 1000) * 1200 / 544);
 		int msgCount = 0;
 
 		codeWords = new ArrayList<>();
