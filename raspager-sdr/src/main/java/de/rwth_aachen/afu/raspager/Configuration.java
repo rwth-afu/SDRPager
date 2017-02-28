@@ -181,7 +181,7 @@ public final class Configuration {
 	public int getInt(String key) {
 		String value = props.getProperty(key);
 		if (value != null) {
-			return Integer.parseInt(key);
+			return Integer.parseInt(value);
 		} else {
 			throw new NoSuchElementException(key);
 		}
